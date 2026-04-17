@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import DashboardPage from "./components/DashboardPage";
 import DashboardPageByDepartment from "./components/DashboardPageByDepartment";
 import Attendance from "./components/Attendance";
+import ErrorBoundary from "./components/ErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const queryClient = new QueryClient({
@@ -17,26 +19,39 @@ const App = () => {
   });
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SkeletonTheme baseColor="#e5e5e5" highlightColor="#d6d4d4">
-          <Routes>
-            <Route index element={<Attendance />} />
-            <Route path="/admin/summary" element={<DashboardPage />} />
-            <Route
-              path="/admin/department/summary"
-              element={<DashboardPageByDepartment />}
-            />
-          </Routes>
-        </SkeletonTheme>
-      </BrowserRouter>
-      <ToastContainer
-        hideProgressBar
-        autoClose={5000}
-        theme="colored"
-        position="top-center"
-      />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SkeletonTheme baseColor="#e5e5e5" highlightColor="#d6d4d4">
+            <Routes>
+              <Route index element={<Attendance />} />
+              <Route
+                path="/admin/summary"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/department/summary"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPageByDepartment />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </SkeletonTheme>
+        </BrowserRouter>
+        <ToastContainer
+          hideProgressBar
+          autoClose={5000}
+          theme="colored"
+          position="top-center"
+        />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
