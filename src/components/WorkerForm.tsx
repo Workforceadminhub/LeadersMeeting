@@ -212,33 +212,58 @@ const WorkerForm = ({
         <Controller
           control={control}
           name="phonenumber"
-          render={({ field, fieldState }) => (
-            <>
-              <input
-                id={`${idPrefix}-phone`}
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel"
-                pattern={`\\d{${PHONE_LENGTH}}`}
-                maxLength={PHONE_LENGTH}
-                placeholder={`${PHONE_LENGTH}-digit phone number`}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                value={field.value || ""}
-                onBlur={field.onBlur}
-                onChange={(e) =>
-                  field.onChange(
-                    onlyDigits(e.target.value).slice(0, PHONE_LENGTH)
-                  )
-                }
-                aria-invalid={fieldState.error ? true : undefined}
-              />
-              {fieldState.error && (
-                <p className="mt-1 text-xs text-red-600" role="alert">
-                  {fieldState.error.message}
-                </p>
-              )}
-            </>
-          )}
+          render={({ field, fieldState }) => {
+            const value = field.value || "";
+            const length = value.length;
+            const showError = Boolean(fieldState.error);
+            return (
+              <>
+                <input
+                  id={`${idPrefix}-phone`}
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  pattern={`\\d{${PHONE_LENGTH}}`}
+                  maxLength={PHONE_LENGTH}
+                  placeholder={`${PHONE_LENGTH}-digit phone number`}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  value={value}
+                  onBlur={field.onBlur}
+                  onChange={(e) =>
+                    field.onChange(
+                      onlyDigits(e.target.value).slice(0, PHONE_LENGTH)
+                    )
+                  }
+                  aria-invalid={showError ? true : undefined}
+                  aria-describedby={`${idPrefix}-phone-hint`}
+                />
+                <div
+                  id={`${idPrefix}-phone-hint`}
+                  className="mt-1 flex items-center justify-between text-xs"
+                >
+                  {showError ? (
+                    <p className="text-red-600" role="alert">
+                      {fieldState.error?.message}
+                    </p>
+                  ) : (
+                    <p className="text-gray-500">
+                      {PHONE_LENGTH} digits, starts with 0 (e.g. 08012345678)
+                    </p>
+                  )}
+                  <span
+                    aria-hidden="true"
+                    className={
+                      length === PHONE_LENGTH
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }
+                  >
+                    {length}/{PHONE_LENGTH}
+                  </span>
+                </div>
+              </>
+            );
+          }}
         />
       </div>
 

@@ -12,12 +12,36 @@ export const workerSchema = z
   .object({
     firstname: z.string().trim().min(1, "First name is required"),
     lastname: z.string().trim().min(1, "Last name is required"),
-    phonenumber: z
-      .string()
-      .regex(
-        new RegExp(`^\\d{${PHONE_LENGTH}}$`),
-        `Phone number must be exactly ${PHONE_LENGTH} digits`
-      ),
+    phonenumber: z.string().superRefine((value, ctx) => {
+      if (!value) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Phone number is required",
+        });
+        return;
+      }
+      if (!/^\d+$/.test(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Phone number must only contain digits",
+        });
+        return;
+      }
+      if (value.length < PHONE_LENGTH) {
+        const missing = PHONE_LENGTH - value.length;
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Phone number has ${value.length} digits — add ${missing} more to reach ${PHONE_LENGTH} (e.g. 08012345678)`,
+        });
+        return;
+      }
+      if (value.length > PHONE_LENGTH) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Phone number has ${value.length} digits — should be ${PHONE_LENGTH}`,
+        });
+      }
+    }),
     team: z
       .string()
       .min(1, "Team is required")
