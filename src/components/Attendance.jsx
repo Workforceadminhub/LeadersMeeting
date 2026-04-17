@@ -2,7 +2,6 @@ import { useSearchWorker } from "../services/search";
 import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
 import { useEffect, useState } from "react";
 import {
-  // useAttendance,
   useManualAttendance,
   useWorkerUpdate,
 } from "../services/attendance";
@@ -14,133 +13,86 @@ import { workerrolesoptions } from "../utils/teams";
 import Select from "./Dropdown";
 import { departmentsWithTeams, teamsSummary } from "../utils/options";
 
+const emptyPerson = {
+  firstname: "",
+  lastname: "",
+  phonenumber: "",
+  department: "",
+  team: "",
+  fullname: "",
+  workerrole: "",
+};
+
+const PHONE_LENGTH = 11;
+const isValidPhone = (value) => /^\d{11}$/.test(value || "");
+const onlyDigits = (value) => (value || "").replace(/\D/g, "");
+
 const Attendance = () => {
   const { debouncedSearch, search: searchValue } = useDebouncedSearch();
   const { data: filteredPeople, isLoading } = useSearchWorker(searchValue);
-  // const { mutate: markAttendanceMutation } = useAttendance();
   const { mutate: manualAttendanceMutation } = useManualAttendance();
   const { mutate: updateWorker } = useWorkerUpdate();
+
   const [query, setQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // const [mutateIsLoadingId, setMutateIsLoadingId] = useState(0);
   const [manuallySaving, setManuallySaving] = useState(false);
   const [isEditSaving, setIsEditSaving] = useState(false);
   const queryClient = useQueryClient();
-  const [newPerson, setNewPerson] = useState({
-    firstname: "",
-    lastname: "",
-    phonenumber: "",
-    department: "",
-    team: "",
-    fullname: "",
-    workerrole: "",
-    // email: "",
-  });
 
-  const [activePerson, setActivePerson] = useState({
-    firstname: "",
-    lastname: "",
-    phonenumber: "",
-    department: "",
-    team: "",
-    fullname: "",
-    workerrole: ""
-    // email: "",
-  });
-
+  const [newPerson, setNewPerson] = useState(emptyPerson);
+  const [activePerson, setActivePerson] = useState(emptyPerson);
   const [activeTeam, setActiveTeam] = useState(activePerson.team);
 
-  // trigger deployment comment
   const title =
     "Leaders Meeting with Pastor Mayowa Agboade\nSaturday 18th April 2026";
-
-  const handleSearch = (e) => {
-    setQuery(e.target.value);
-    debouncedSearch(
-      e.target.value.startsWith(0)
-        ? e.target.value.replace(0, "")
-        : e.target.value
-    );
-  };
-
-  const handleCreate = () => {
-    setIsCreating(true);
-  };
-
-  const resetCreate = () => {
-    setIsCreating(false);
-  };
-
-  const resetEdit = () => {
-    setIsEditing(false);
-    setActiveTeam("");
-  };
 
   useEffect(() => {
     setActiveTeam(activePerson.team);
   }, [activePerson.team]);
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    debouncedSearch(value.startsWith("0") ? value.replace(/^0/, "") : value);
+  };
+
+  const handleCreate = () => setIsCreating(true);
+  const resetCreate = () => {
+    setIsCreating(false);
+    setNewPerson(emptyPerson);
+  };
+  const resetEdit = () => {
+    setIsEditing(false);
+    setActiveTeam("");
+  };
+
+  const capitalizeField = (setter, field) => (e) => {
+    const value = capitalize(e.target.value.trim());
+    setter((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSave = () => {
-    if (!newPerson.firstname || !newPerson.lastname) {
-      toast.error("First name or last name is missing");
-      return;
-    }
+    if (!isCreateFormValid) return;
 
-    if (!newPerson.phonenumber) {
-      toast.error("Phone number is missing");
-      return;
-    }
-    if (!newPerson.team || newPerson.team === "All") {
-      toast.error("Team is missing");
-      return;
-    }
-    if (!newPerson.department || newPerson.department === "All") {
-      toast.error("Department is missing");
-      return;
-    }
-    if (!newPerson.workerrole) {
-      toast.error("Role is missing");
-      return;
-    }
-
-    const isPresentKey = "ispresent";
     setManuallySaving(true);
     manualAttendanceMutation(
       {
         ...newPerson,
         fullname:
           `${newPerson.firstname.trim()} ${newPerson.lastname.trim()}`.trim(),
-        [isPresentKey]: true,
+        ispresent: true,
       },
       {
         onSuccess() {
           toast.success("Attendance manually added successfully");
           queryClient.invalidateQueries();
-          setNewPerson({
-            firstname: "",
-            lastname: "",
-            phonenumber: "",
-            department: "",
-            team: "",
-            fullname: "",
-            // email: "",
-            workerrole: "",
-          });
+          setNewPerson(emptyPerson);
           setManuallySaving(false);
           setIsCreating(false);
         },
         onError(error) {
-          setNewPerson({
-            firstname: "",
-            lastname: "",
-            phonenumber: "",
-            department: "",
-            team: "",
-            fullname: "",
-            // email: "",
-            workerrole: "",
-          });
+          setNewPerson(emptyPerson);
           setManuallySaving(false);
           setIsCreating(false);
           throw error;
@@ -150,51 +102,21 @@ const Attendance = () => {
   };
 
   const handleUpdate = () => {
-    if (!activePerson.firstname || !activePerson.lastname) {
-      toast.error("First name or last name is missing");
-      return;
-    }
+    if (!isEditFormValid) return;
 
-    if (!activePerson.phonenumber) {
-      toast.error("Phone number is missing");
-      return;
-    }
-
-    if (!activePerson.team || activePerson.team === "All") {
-      toast.error("Team is missing");
-      return;
-    }
-    if (!activePerson.department || activePerson.department === "All") {
-      toast.error("Department is missing");
-      return;
-    }
-    if (!activePerson.workerrole) {
-      toast.error("Role is missing");
-      return;
-    }
-    const isPresentKey = "ispresent";
     setIsEditSaving(true);
     updateWorker(
       {
         ...activePerson,
         fullname:
           `${activePerson.firstname.trim()} ${activePerson.lastname.trim()}`.trim(),
-        [isPresentKey]: true,
+        ispresent: true,
       },
       {
         onSuccess() {
-          toast.success("Attendance manually added successfully");
+          toast.success("Attendance marked successfully");
           queryClient.invalidateQueries();
-          setActivePerson({
-            firstname: "",
-            lastname: "",
-            phonenumber: "",
-            department: "",
-            team: "",
-            fullname: "",
-            // email: "",
-            workerrole: "",
-          });
+          setActivePerson(emptyPerson);
           setIsEditSaving(false);
           setIsEditing(false);
         },
@@ -207,28 +129,12 @@ const Attendance = () => {
     );
   };
 
-  // const handleMarkPresent = (person) => {
-  //   setMutateIsLoadingId(person.id);
-  //   markAttendanceMutation(person, {
-  //     onSuccess() {
-  //       toast.success("Attendance marked successfully");
-  //       setMutateIsLoadingId(0);
-  //       queryClient.invalidateQueries();
-  //     },
-  //     onError(error) {
-  //       setMutateIsLoadingId(0);
-  //       throw error;
-  //     },
-  //   });
-  // };
-
   const handleEdit = (person) => {
-    // Implement edit functionality
     setIsEditing(true);
     setActivePerson(person);
   };
 
-  const getDepartment = () => {
+  const getDepartmentOptions = () => {
     const departments = departmentsWithTeams[activeTeam || activePerson.team];
     const options = departments
       ? departments.map((department) => ({
@@ -237,20 +143,14 @@ const Attendance = () => {
         }))
       : [];
 
-    const finalOptions = [
-      {
-        label: "Choose department",
-        value: null,
-      },
-    ].concat(options);
-    return finalOptions;
+    return [{ label: "Choose department", value: "" }].concat(options);
   };
 
   const isPersonFormValid = (person) =>
     Boolean(
       person.firstname?.trim() &&
         person.lastname?.trim() &&
-        person.phonenumber?.trim() &&
+        isValidPhone(person.phonenumber) &&
         person.team &&
         person.team !== "All" &&
         person.department &&
@@ -263,36 +163,50 @@ const Attendance = () => {
   const isCreateFormValid = isPersonFormValid(newPerson);
   const isEditFormValid = isPersonFormValid(activePerson);
 
+  const renderPhoneError = (phonenumber) => {
+    if (!phonenumber) return null;
+    if (!isValidPhone(phonenumber)) {
+      return (
+        <p className="mt-1 text-xs text-red-600" role="alert">
+          Phone number must be exactly {PHONE_LENGTH} digits
+        </p>
+      );
+    }
+    return null;
+  };
+
+  const roleOptions = [
+    { label: "Choose role", value: "" },
+    ...workerrolesoptions.filter((option) => option.value !== "All"),
+  ];
+
   return (
     <div className="min-h-screen flex flex-col md:items-center bg-gray-50 p-4">
       <div className="lg:w-5/12">
-        {/* Header with Logo and Title */}
         <header className="text-center mb-4 mt-1">
           <img
             src="/logo.jpg"
             alt="Harvesters International Christian Center Logo"
             className="w-32 h-32 mx-auto"
           />
-          {/* <h1 className="text-2xl font-bold mt-4">
-            Harvesters International Christian Centre, Gbagada campus
-          </h1> */}
-          <h2 className="text-2xl font-bold text-gray-500 mt-4 whitespace-pre-line">
+          <h2 className="text-2xl font-bold text-gray-700 mt-4 whitespace-pre-line">
             {title}
           </h2>
         </header>
+
         <div className="bg-white shadow-lg rounded-xl p-6 mb-24 mt-12">
-          {/* Search Input */}
           {!isEditing && (
             <input
-              type="text"
+              type="search"
+              inputMode="search"
+              aria-label="Search by name or phone number"
               placeholder="Search by name or phone number"
-              className="w-full mb-4 p-2 h-14 border rounded-lg"
+              className="w-full mb-4 p-2 h-14 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
               value={query}
               onChange={handleSearch}
             />
           )}
 
-          {/* Search Results attendance*/}
           {!isCreating &&
           !isEditing &&
           searchValue &&
@@ -302,54 +216,44 @@ const Attendance = () => {
                 {filteredPeople?.map((person, index) => (
                   <li
                     key={index}
-                    className="p-4 border rounded-lg flex justify-between items-center"
+                    className="p-4 border border-gray-200 rounded-lg flex justify-between items-center"
                   >
                     <div className="flex flex-col">
-                      <span>
+                      <span className="text-gray-900">
                         {person.firstname} {person.lastname}
                       </span>
                       {person.workerrole && (
-                        <span className="opacity-60">{person.workerrole}</span>
+                        <span className="text-gray-600 text-sm">
+                          {person.workerrole}
+                        </span>
                       )}
                       {person.team ? (
-                        <span className="opacity-50">
-                          {person?.team} -{" "}
-                          {person?.department && person?.department}
+                        <span className="text-gray-500 text-sm">
+                          {person.team}
+                          {person.department && ` - ${person.department}`}
                         </span>
                       ) : (
-                        <span>{person.team || person.department}</span>
+                        <span className="text-gray-500 text-sm">
+                          {person.team || person.department}
+                        </span>
                       )}
                     </div>
                     {person.ispresent ? (
                       <div className="flex space-x-4">
-                        <button className="px-2 py-2 text-sm bg-green-500 text-white rounded-lg flex justify-between cursor-not-allowed">
+                        <button
+                          disabled
+                          aria-disabled="true"
+                          className="px-2 py-2 text-sm bg-green-500 text-white rounded-lg flex justify-between cursor-not-allowed"
+                        >
                           <CheckBadgeIcon className="text-white size-5" />
                           <span className="ml-3">Present</span>
                         </button>
-                        {/* <button
-                          onClick={() => handleEdit(person)}
-                          className="px-8 py-2 text-sm bg-blue-500 text-white cursor-pointer rounded-lg flex"
-                        >
-                          Open
-                        </button> */}
                       </div>
                     ) : (
                       <div className="flex space-x-4">
-                        {/* <button
-                          onClick={() =>
-                            mutateIsLoadingId === 0
-                              ? handleMarkPresent(person)
-                              : undefined
-                          }
-                          className="px-2 py-2 text-sm bg-blue-500 text-white rounded-lg cursor-pointer flex"
-                        >
-                          {mutateIsLoadingId === person.id
-                            ? "Marking..."
-                            : "Mark Present"}
-                        </button> */}
                         <button
                           onClick={() => handleEdit(person)}
-                          className="px-8 py-2 text-sm bg-blue-500 text-white cursor-pointer rounded-lg flex"
+                          className="px-8 py-2 text-sm bg-blue-500 text-white cursor-pointer rounded-lg flex hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                         >
                           Open
                         </button>
@@ -359,10 +263,10 @@ const Attendance = () => {
                 ))}
               </ul>
               <div className="items-center text-center">
-                <div className="mt-6">OR</div>
+                <div className="mt-6 text-gray-700">OR</div>
                 <button
                   onClick={handleCreate}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 >
                   Manually add attendance
                 </button>
@@ -373,13 +277,13 @@ const Attendance = () => {
               {!isCreating && !isEditing && (
                 <div className="text-center my-4">
                   {isLoading && searchValue ? (
-                    <p>Searching...</p>
+                    <p className="text-gray-700">Searching...</p>
                   ) : !isLoading && searchValue ? (
                     <div>
-                      <p>No results</p>
+                      <p className="text-gray-700">No results</p>
                       <button
                         onClick={handleCreate}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                       >
                         Manually add attendance
                       </button>
@@ -390,126 +294,128 @@ const Attendance = () => {
             </>
           )}
 
-          {/* Create Form */}
           {isCreating && (
             <div className="mt-4">
-              <h2 className="text-xl font-bold mb-4 text-center">
+              <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
                 Manually add attendance
               </h2>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  className="w-full p-2 border rounded-lg"
-                  value={newPerson.firstname}
-                  onChange={(e) =>
-                    setNewPerson({
-                      ...newPerson,
-                      firstname: capitalize(e.target.value),
-                    })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  className="w-full p-2 border rounded-lg"
-                  value={newPerson.lastname}
-                  onChange={(e) =>
-                    setNewPerson({
-                      ...newPerson,
-                      lastname: capitalize(e.target.value),
-                    })
-                  }
-                />
-                {/* <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full p-2 border rounded-lg"
-                  value={newPerson.email}
-                  onChange={(e) =>
-                    setNewPerson({
-                      ...newPerson,
-                      email: e.target.value,
-                    })
-                  }
-                /> */}
-                <input
-                  type="text"
-                  placeholder="Phone Number"
-                  className="w-full p-2 border rounded-lg"
-                  value={newPerson.phonenumber}
-                  onChange={(e) =>
-                    setNewPerson({ ...newPerson, phonenumber: e.target.value })
-                  }
-                />
-                {/* <Select
-                  label="Select team"
-                  options={teams}
+                <div>
+                  <label
+                    htmlFor="create-firstname"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    First name
+                  </label>
+                  <input
+                    id="create-firstname"
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="First Name"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={newPerson.firstname}
+                    onChange={(e) =>
+                      setNewPerson({ ...newPerson, firstname: e.target.value })
+                    }
+                    onBlur={capitalizeField(setNewPerson, "firstname")}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="create-lastname"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    Last name
+                  </label>
+                  <input
+                    id="create-lastname"
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Last Name"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={newPerson.lastname}
+                    onChange={(e) =>
+                      setNewPerson({ ...newPerson, lastname: e.target.value })
+                    }
+                    onBlur={capitalizeField(setNewPerson, "lastname")}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="create-phone"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    Phone number
+                  </label>
+                  <input
+                    id="create-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    pattern="\d{11}"
+                    maxLength={PHONE_LENGTH}
+                    placeholder="11-digit phone number"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={newPerson.phonenumber}
+                    onChange={(e) =>
+                      setNewPerson({
+                        ...newPerson,
+                        phonenumber: onlyDigits(e.target.value).slice(
+                          0,
+                          PHONE_LENGTH
+                        ),
+                      })
+                    }
+                    aria-invalid={
+                      newPerson.phonenumber && !isValidPhone(newPerson.phonenumber)
+                        ? true
+                        : undefined
+                    }
+                  />
+                  {renderPhoneError(newPerson.phonenumber)}
+                </div>
+
+                <Select
+                  label="Team"
+                  options={teamsSummary}
                   value={newPerson.team}
-                  onChange={(value) =>
+                  onChange={(value) => {
+                    setActiveTeam(value);
                     setNewPerson({
                       ...newPerson,
-                      team: capitalize(value),
-                    })
-                  }
+                      team: value,
+                      department: "",
+                    });
+                  }}
+                  className="mb-3"
                 />
-                <input
-                  type="text"
-                  placeholder="Department eg Career and Finance"
-                  className="w-full p-2 border rounded-lg"
+
+                <Select
+                  label="Department"
+                  options={getDepartmentOptions()}
                   value={newPerson.department}
-                  onChange={(e) =>
-                    setNewPerson({
-                      ...newPerson,
-                      department: capitalize(e.target.value),
-                    })
+                  onChange={(value) =>
+                    setNewPerson({ ...newPerson, department: value || "" })
                   }
-                /> */}
-                <div>
-                  <Select
-                    options={teamsSummary}
-                    onChange={(value) => {
-                      setActiveTeam(value);
-                      setNewPerson({
-                        ...newPerson,
-                        team: value,
-                        department: "",
-                      });
-                    }}
-                    className="mb-3"
-                  />
-                  <Select
-                    key={`create-dept-${activeTeam || ""}`}
-                    options={getDepartment() || []}
-                    onChange={(value) =>
-                      setNewPerson({
-                        ...newPerson,
-                        department: value || "",
-                      })
-                    }
-                    className="mb-3"
-                  />
-                </div>
-                <div>
-                  <Select
-                    options={[
-                      { label: "Choose role", value: "" },
-                      ...workerrolesoptions.filter(option => option.value !== "All")
-                    ]}
-                    value={newPerson.workerrole}
-                    onChange={(value) =>
-                      setNewPerson({
-                        ...newPerson,
-                        workerrole: value,
-                      })
-                    }
-                    className="mb-3"
-                  />
-                </div>
+                  className="mb-3"
+                />
+
+                <Select
+                  label="Role"
+                  options={roleOptions}
+                  value={newPerson.workerrole}
+                  onChange={(value) =>
+                    setNewPerson({ ...newPerson, workerrole: value })
+                  }
+                  className="mb-3"
+                />
+
                 <div className="flex space-x-2">
                   <button
                     onClick={resetCreate}
-                    className="w-full py-2 bg-red-500 text-white rounded-lg"
+                    className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400 focus:outline-none"
                   >
                     Cancel
                   </button>
@@ -520,10 +426,11 @@ const Attendance = () => {
                         : undefined
                     }
                     disabled={!isCreateFormValid || manuallySaving}
-                    className={`w-full py-2 text-white rounded-lg ${
+                    aria-disabled={!isCreateFormValid || manuallySaving}
+                    className={`w-full py-2 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none ${
                       !isCreateFormValid || manuallySaving
                         ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-blue-500 cursor-pointer"
+                        : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
                     }`}
                   >
                     {manuallySaving ? "Saving" : "Save"}
@@ -532,131 +439,139 @@ const Attendance = () => {
               </div>
             </div>
           )}
-          {/* Edit Form */}
+
           {isEditing && (
             <div className="mt-1">
-              <h2 className="text-xl font-bold mb-4 text-center">
+              <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
                 Update worker info
               </h2>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  className="w-full p-2 border rounded-lg"
-                  value={activePerson.firstname}
-                  onChange={(e) =>
-                    setActivePerson({
-                      ...activePerson,
-                      firstname: capitalize(e.target.value),
-                    })
-                  }
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  className="w-full p-2 border rounded-lg"
-                  value={activePerson.lastname}
-                  onChange={(e) =>
-                    setActivePerson({
-                      ...activePerson,
-                      lastname: capitalize(e.target.value),
-                    })
-                  }
-                />
-                {/* <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full p-2 border rounded-lg"
-                  value={activePerson.email}
-                  onChange={(e) =>
-                    setActivePerson({
-                      ...activePerson,
-                      email: e.target.value,
-                    })
-                  }
-                /> */}
-                <input
-                  type="text"
-                  placeholder="Phone Number"
-                  className="w-full p-2 border rounded-lg"
-                  value={activePerson.phonenumber}
-                  onChange={(e) =>
-                    setActivePerson({
-                      ...activePerson,
-                      phonenumber: e.target.value,
-                    })
-                  }
-                />
-                {/* <Select
-                  label="Select team"
-                  options={teams}
+                <div>
+                  <label
+                    htmlFor="edit-firstname"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    First name
+                  </label>
+                  <input
+                    id="edit-firstname"
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="First Name"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={activePerson.firstname}
+                    onChange={(e) =>
+                      setActivePerson({
+                        ...activePerson,
+                        firstname: e.target.value,
+                      })
+                    }
+                    onBlur={capitalizeField(setActivePerson, "firstname")}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="edit-lastname"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    Last name
+                  </label>
+                  <input
+                    id="edit-lastname"
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Last Name"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={activePerson.lastname}
+                    onChange={(e) =>
+                      setActivePerson({
+                        ...activePerson,
+                        lastname: e.target.value,
+                      })
+                    }
+                    onBlur={capitalizeField(setActivePerson, "lastname")}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="edit-phone"
+                    className="text-sm mb-2 block text-gray-700"
+                  >
+                    Phone number
+                  </label>
+                  <input
+                    id="edit-phone"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    pattern="\d{11}"
+                    maxLength={PHONE_LENGTH}
+                    placeholder="11-digit phone number"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                    value={activePerson.phonenumber}
+                    onChange={(e) =>
+                      setActivePerson({
+                        ...activePerson,
+                        phonenumber: onlyDigits(e.target.value).slice(
+                          0,
+                          PHONE_LENGTH
+                        ),
+                      })
+                    }
+                    aria-invalid={
+                      activePerson.phonenumber &&
+                      !isValidPhone(activePerson.phonenumber)
+                        ? true
+                        : undefined
+                    }
+                  />
+                  {renderPhoneError(activePerson.phonenumber)}
+                </div>
+
+                <Select
+                  label="Team"
+                  options={teamsSummary}
                   value={activePerson.team}
+                  onChange={(value) => {
+                    setActiveTeam(value);
+                    setActivePerson({
+                      ...activePerson,
+                      team: value,
+                      department: "",
+                    });
+                  }}
+                  className="mb-3"
+                />
+
+                <Select
+                  label="Department"
+                  options={getDepartmentOptions()}
+                  value={activePerson.department}
                   onChange={(value) =>
                     setActivePerson({
                       ...activePerson,
-                      team: capitalize(value),
+                      department: value || "",
                     })
                   }
+                  className="mb-3"
                 />
-                <input
-                  type="text"
-                  placeholder="Department eg Career and Finance"
-                  className="w-full p-2 border rounded-lg"
-                  value={activePerson.department}
-                  onChange={(e) =>
-                    setActivePerson({
-                      ...activePerson,
-                      department: capitalize(e.target.value),
-                    })
+
+                <Select
+                  label="Role"
+                  options={roleOptions}
+                  value={activePerson.workerrole}
+                  onChange={(value) =>
+                    setActivePerson({ ...activePerson, workerrole: value })
                   }
-                /> */}
-                <div>
-                  <Select
-                    options={teamsSummary}
-                    defaultValue={activePerson.team}
-                    onChange={(value) => {
-                      setActiveTeam(value);
-                      setActivePerson({
-                        ...activePerson,
-                        team: value,
-                        department: "",
-                      });
-                    }}
-                    className="mb-3"
-                  />
-                  <Select
-                    key={`edit-dept-${activeTeam || activePerson.team || ""}`}
-                    options={getDepartment() || []}
-                    defaultValue={activePerson.department}
-                    onChange={(value) =>
-                      setActivePerson({
-                        ...activePerson,
-                        department: value || "",
-                      })
-                    }
-                    className="mb-3"
-                  />
-                </div>
-                <div>
-                  <Select
-                    options={[
-                      { label: "Choose role", value: "" },
-                      ...workerrolesoptions.filter(option => option.value !== "All")
-                    ]}
-                    value={activePerson.workerrole}
-                    onChange={(value) =>
-                      setActivePerson({
-                        ...activePerson,
-                        workerrole: value,
-                      })
-                    }
-                    className="mb-3"
-                  />
-                </div>
+                  className="mb-3"
+                />
+
                 <div className="flex space-x-2">
                   <button
                     onClick={resetEdit}
-                    className="w-full py-2 bg-red-500 text-white rounded-lg cursor-pointer"
+                    className="w-full py-2 bg-red-500 text-white rounded-lg cursor-pointer hover:bg-red-600 focus:ring-2 focus:ring-red-400 focus:outline-none"
                   >
                     Cancel
                   </button>
@@ -667,10 +582,11 @@ const Attendance = () => {
                         : undefined
                     }
                     disabled={!isEditFormValid || isEditSaving}
-                    className={`w-full py-2 text-white rounded-lg ${
+                    aria-disabled={!isEditFormValid || isEditSaving}
+                    className={`w-full py-2 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none ${
                       !isEditFormValid || isEditSaving
                         ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-blue-500 cursor-pointer"
+                        : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
                     }`}
                   >
                     {isEditSaving ? "Marking..." : "Mark Attendance"}
