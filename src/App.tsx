@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SkeletonTheme } from "react-loading-skeleton";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import DashboardPage from "./components/DashboardPage";
+import AdminReport from "./components/AdminReport";
 import DashboardPageByDepartment from "./components/DashboardPageByDepartment";
 import Attendance from "./components/Attendance";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -33,7 +33,7 @@ const App = () => {
                 path="/admin/summary"
                 element={
                   <ProtectedRoute>
-                    <DashboardPage />
+                    <AdminReport />
                   </ProtectedRoute>
                 }
               />
