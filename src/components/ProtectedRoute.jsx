@@ -3,7 +3,7 @@ import { useState } from "react";
 const STORAGE_KEY = "leaders_admin_unlocked";
 
 const ProtectedRoute = ({ children }) => {
-  const expected = process.env.REACT_APP_ADMIN_PASSCODE;
+  const expected = import.meta.env.REACT_APP_ADMIN_PASSCODE;
   const [unlocked, setUnlocked] = useState(
     () =>
       typeof window !== "undefined" &&

@@ -8,7 +8,7 @@ import {
 import { CheckBadgeIcon } from "@heroicons/react/16/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import { capitalize } from "lodash";
+import capitalize from "lodash/capitalize";
 import { workerrolesoptions } from "../utils/teams";
 import Select from "./Dropdown";
 import { departmentsWithTeams, teamsSummary } from "../utils/options";

@@ -56,23 +56,30 @@ const updateWorker = async (person) => {
   return data;
 };
 
+const mutationDefaults = {
+  networkMode: "offlineFirst",
+  retry: 3,
+  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
+  gcTime: 0,
+};
+
 export const useAttendance = () => {
   return useMutation({
     mutationFn: markPresent,
-    cacheTime: 0,
+    ...mutationDefaults,
   });
 };
 
 export const useManualAttendance = () => {
   return useMutation({
     mutationFn: manualAttendance,
-    cacheTime: 0,
+    ...mutationDefaults,
   });
 };
 
 export const useWorkerUpdate = () => {
   return useMutation({
     mutationFn: updateWorker,
-    cacheTime: 0,
+    ...mutationDefaults,
   });
 };

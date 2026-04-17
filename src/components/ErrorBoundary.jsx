@@ -11,7 +11,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    if (process.env.NODE_ENV !== "production") {
+    if (import.meta.env.DEV) {
       console.error("ErrorBoundary caught:", error, info);
     }
   }
@@ -48,7 +48,7 @@ class ErrorBoundary extends React.Component {
             The page hit an unexpected error. Reload to try again. If the
             problem keeps happening, let the admin know.
           </p>
-          {process.env.NODE_ENV !== "production" && this.state.error && (
+          {import.meta.env.DEV && this.state.error && (
             <pre className="mt-4 max-h-40 overflow-auto rounded-md bg-gray-100 p-3 text-left text-xs text-gray-700">
               {String(this.state.error?.message || this.state.error)}
             </pre>

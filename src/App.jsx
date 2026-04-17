@@ -8,6 +8,8 @@ import DashboardPageByDepartment from "./components/DashboardPageByDepartment";
 import Attendance from "./components/Attendance";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
+import OfflineBanner from "./components/OfflineBanner";
+import UpdatePrompt from "./components/UpdatePrompt";
 
 const App = () => {
   const queryClient = new QueryClient({
@@ -21,6 +23,8 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <OfflineBanner />
+        <UpdatePrompt />
         <BrowserRouter>
           <SkeletonTheme baseColor="#e5e5e5" highlightColor="#d6d4d4">
             <Routes>
