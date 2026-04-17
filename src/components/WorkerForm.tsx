@@ -246,9 +246,7 @@ const WorkerForm = ({
                       {fieldState.error?.message}
                     </p>
                   ) : (
-                    <p className="text-gray-500">
-                      {PHONE_LENGTH} digits, starts with 0 (e.g. 08012345678)
-                    </p>
+                    <span aria-hidden="true" />
                   )}
                   <span
                     aria-hidden="true"
