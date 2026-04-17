@@ -122,7 +122,7 @@ const Attendance = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:items-center bg-gray-50 p-4">
-      <div className="lg:w-5/12">
+      <div className="w-full max-w-xl">
         <header className="text-center mb-4 mt-1">
           <img
             src="/logo.jpg"
