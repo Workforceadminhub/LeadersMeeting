@@ -245,6 +245,22 @@ const Attendance = () => {
     return finalOptions;
   };
 
+  const isPersonFormValid = (person) =>
+    Boolean(
+      person.firstname?.trim() &&
+        person.lastname?.trim() &&
+        person.phonenumber?.trim() &&
+        person.team &&
+        person.team !== "All" &&
+        person.department &&
+        person.department !== "All" &&
+        person.workerrole &&
+        person.workerrole !== "All"
+    );
+
+  const isCreateFormValid = isPersonFormValid(newPerson);
+  const isEditFormValid = isPersonFormValid(activePerson);
+
   return (
     <div className="min-h-screen flex flex-col md:items-center bg-gray-50 p-4">
       <div className="lg:w-5/12">
@@ -492,8 +508,17 @@ const Attendance = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => (!manuallySaving ? handleSave() : undefined)}
-                    className="w-full py-2 bg-blue-500 text-white rounded-lg"
+                    onClick={() =>
+                      !manuallySaving && isCreateFormValid
+                        ? handleSave()
+                        : undefined
+                    }
+                    disabled={!isCreateFormValid || manuallySaving}
+                    className={`w-full py-2 text-white rounded-lg ${
+                      !isCreateFormValid || manuallySaving
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-blue-500 cursor-pointer"
+                    }`}
                   >
                     {manuallySaving ? "Saving" : "Save"}
                   </button>
@@ -628,8 +653,17 @@ const Attendance = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => (!isEditSaving ? handleUpdate() : undefined)}
-                    className="w-full py-2 bg-blue-500 text-white rounded-lg cursor-pointer"
+                    onClick={() =>
+                      !isEditSaving && isEditFormValid
+                        ? handleUpdate()
+                        : undefined
+                    }
+                    disabled={!isEditFormValid || isEditSaving}
+                    className={`w-full py-2 text-white rounded-lg ${
+                      !isEditFormValid || isEditSaving
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-blue-500 cursor-pointer"
+                    }`}
                   >
                     {isEditSaving ? "Marking..." : "Mark Attendance"}
                   </button>
