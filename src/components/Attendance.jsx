@@ -10,7 +10,7 @@ import { CheckBadgeIcon } from "@heroicons/react/16/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { capitalize } from "lodash";
-import { capitalizeWords, workerrolesoptions } from "../utils/teams";
+import { workerrolesoptions } from "../utils/teams";
 import Select from "./Dropdown";
 import { departmentsWithTeams, teamsSummary } from "../utils/options";
 
@@ -254,6 +254,7 @@ const Attendance = () => {
         person.team !== "All" &&
         person.department &&
         person.department !== "All" &&
+        departmentsWithTeams[person.team]?.includes(person.department) &&
         person.workerrole &&
         person.workerrole !== "All"
     );
@@ -468,17 +469,19 @@ const Attendance = () => {
                       setActiveTeam(value);
                       setNewPerson({
                         ...newPerson,
-                        team: capitalizeWords(value),
+                        team: value,
+                        department: "",
                       });
                     }}
                     className="mb-3"
                   />
                   <Select
+                    key={`create-dept-${activeTeam || ""}`}
                     options={getDepartment() || []}
                     onChange={(value) =>
                       setNewPerson({
                         ...newPerson,
-                        department: capitalizeWords(value),
+                        department: value || "",
                       })
                     }
                     className="mb-3"
@@ -612,18 +615,20 @@ const Attendance = () => {
                       setActiveTeam(value);
                       setActivePerson({
                         ...activePerson,
-                        team: capitalizeWords(value),
+                        team: value,
+                        department: "",
                       });
                     }}
                     className="mb-3"
                   />
                   <Select
+                    key={`edit-dept-${activeTeam || activePerson.team || ""}`}
                     options={getDepartment() || []}
                     defaultValue={activePerson.department}
                     onChange={(value) =>
                       setActivePerson({
                         ...activePerson,
-                        department: capitalizeWords(value),
+                        department: value || "",
                       })
                     }
                     className="mb-3"
