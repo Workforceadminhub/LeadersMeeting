@@ -1,16 +1,28 @@
 import React from "react";
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+type ErrorBoundaryProps = {
+  children: React.ReactNode;
+};
+
+type ErrorBoundaryState = {
+  hasError: boolean;
+  error: Error | null;
+};
+
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
     if (import.meta.env.DEV) {
       console.error("ErrorBoundary caught:", error, info);
     }
@@ -43,7 +55,9 @@ class ErrorBoundary extends React.Component {
               />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-800">Something went wrong</h1>
+          <h1 className="text-xl font-bold text-gray-800">
+            Something went wrong
+          </h1>
           <p className="mt-2 text-sm text-gray-600">
             The page hit an unexpected error. Reload to try again. If the
             problem keeps happening, let the admin know.

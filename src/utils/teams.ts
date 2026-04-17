@@ -1,4 +1,6 @@
-export const workerrolesoptions = [
+import type { SelectOption } from "../types";
+
+export const workerrolesoptions: SelectOption[] = [
   { label: "All Roles", value: "All" },
   { label: "Worker", value: "Worker" },
   { label: "Small Group Leader", value: "Small Group Leader" },
@@ -19,7 +21,7 @@ export const workerrolesoptions = [
   { label: "Directional Leader", value: "Directional Leader" },
 ];
 
-export const campusoptions = [
+export const campusoptions: SelectOption[] = [
   { label: "All Campuses", value: "All" },
   { label: "Abeokuta", value: "Abeokuta" },
   { label: "Akobo", value: "Akobo" },

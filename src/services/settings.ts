@@ -4,7 +4,7 @@ import supabase from "./supabase";
 export const DEFAULT_MEETING_TITLE =
   "Leaders Meeting with Pastor Mayowa Agboade\nSaturday 18th April 2026";
 
-const fetchSetting = async (key) => {
+const fetchSetting = async <T = unknown>(key: string): Promise<T | null> => {
   const { data, error } = await supabase
     .from("app_settings")
     .select("value")
@@ -12,17 +12,17 @@ const fetchSetting = async (key) => {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data?.value ?? null;
+  return (data?.value as T | undefined) ?? null;
 };
 
 export const useMeetingTitle = () => {
   const query = useQuery({
     queryKey: ["app_settings", "meeting_title"],
-    queryFn: () => fetchSetting("meeting_title"),
+    queryFn: () => fetchSetting<string>("meeting_title"),
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
-    networkMode: "offlineFirst",
+    networkMode: "offlineFirst" as const,
   });
 
   const raw = query.data;

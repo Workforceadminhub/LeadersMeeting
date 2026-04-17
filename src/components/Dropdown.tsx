@@ -1,10 +1,33 @@
 import React, { forwardRef, useId } from "react";
 import clsx from "clsx";
+import type { SelectOption } from "../types";
 
-const Select = forwardRef(
+type SelectProps = {
+  onChange?: (value: string) => void;
+  onBlur?: React.FocusEventHandler<HTMLSelectElement>;
+  value?: string;
+  className?: string;
+  inputClassName?: string;
+  label?: string;
+  secondaryLabel?: string;
+  hasErrors?: boolean;
+  error?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  options: SelectOption[];
+  showBorder?: boolean;
+  id?: string;
+  "aria-label"?: string;
+} & Omit<
+  React.SelectHTMLAttributes<HTMLSelectElement>,
+  "onChange" | "value"
+>;
+
+const Select = forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       onChange = () => {},
+      onBlur,
       value,
       className,
       inputClassName,
@@ -47,6 +70,7 @@ const Select = forwardRef(
           ref={ref}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           className={clsx(
             { "border border-gray-300": showBorder },
             { "border-red-500": hasErrors },

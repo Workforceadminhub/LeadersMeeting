@@ -50,7 +50,7 @@ export const workerSchema = z
     }
   });
 
-export const defaultWorkerValues = {
+export const defaultWorkerValues: z.infer<typeof workerSchema> = {
   firstname: "",
   lastname: "",
   phonenumber: "",

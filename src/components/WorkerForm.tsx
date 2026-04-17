@@ -1,5 +1,11 @@
 import { useEffect, useMemo } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  useWatch,
+  type Control,
+  type UseFormSetValue,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import capitalize from "lodash/capitalize";
 import Select from "./Dropdown";
@@ -10,10 +16,19 @@ import {
 } from "../schemas/worker";
 import { departmentsWithTeams, teamsSummary } from "../utils/options";
 import { workerrolesoptions } from "../utils/teams";
+import type { WorkerFormValues } from "../types";
 
-const onlyDigits = (value) => (value || "").replace(/\D/g, "");
+const onlyDigits = (value: string) => (value || "").replace(/\D/g, "");
 
-const TeamDepartmentSelects = ({ control, setValue }) => {
+type TeamDepartmentSelectsProps = {
+  control: Control<WorkerFormValues>;
+  setValue: UseFormSetValue<WorkerFormValues>;
+};
+
+const TeamDepartmentSelects = ({
+  control,
+  setValue,
+}: TeamDepartmentSelectsProps) => {
   const team = useWatch({ control, name: "team" });
 
   const teamOptions = useMemo(
@@ -25,7 +40,7 @@ const TeamDepartmentSelects = ({ control, setValue }) => {
   );
 
   const departmentOptions = useMemo(() => {
-    const list = departmentsWithTeams[team] || [];
+    const list = team ? departmentsWithTeams[team] || [] : [];
     return [
       { label: "Choose department", value: "" },
       ...list.map((department) => ({
@@ -76,6 +91,15 @@ const TeamDepartmentSelects = ({ control, setValue }) => {
   );
 };
 
+type WorkerFormProps = {
+  mode: "create" | "edit";
+  initialValues: Partial<WorkerFormValues> | null;
+  isSubmitting: boolean;
+  submitLabel: string;
+  onSubmit: (values: WorkerFormValues) => void;
+  onCancel: () => void;
+};
+
 const WorkerForm = ({
   mode,
   initialValues,
@@ -83,7 +107,7 @@ const WorkerForm = ({
   submitLabel,
   onSubmit,
   onCancel,
-}) => {
+}: WorkerFormProps) => {
   const roleOptions = useMemo(
     () => [
       { label: "Choose role", value: "" },
@@ -100,7 +124,7 @@ const WorkerForm = ({
     getValues,
     reset,
     formState: { errors, isValid },
-  } = useForm({
+  } = useForm<WorkerFormValues>({
     resolver: zodResolver(workerSchema),
     mode: "onBlur",
     defaultValues: { ...defaultWorkerValues, ...initialValues },
@@ -110,7 +134,7 @@ const WorkerForm = ({
     reset({ ...defaultWorkerValues, ...initialValues });
   }, [initialValues, reset]);
 
-  const capitalizeOnBlur = (field) => () => {
+  const capitalizeOnBlur = (field: "firstname" | "lastname") => () => {
     const current = getValues(field) || "";
     const next = capitalize(current.trim());
     if (next !== current) {
@@ -122,11 +146,7 @@ const WorkerForm = ({
   const buttonDisabled = isSubmitting || !isValid;
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4"
-      noValidate
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <div>
         <label
           htmlFor={`${idPrefix}-firstname`}

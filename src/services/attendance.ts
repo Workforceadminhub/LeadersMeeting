@@ -1,18 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import supabase from "./supabase";
+import type { Worker } from "../types";
 
-const table = "leader"  
-const markPresent = async (person) => {
-  // const day = getAwakeningDay();
+const table = "leader";
+
+const markPresent = async (person: Worker): Promise<Worker | null> => {
   const isPresentKey = "ispresent";
   const { data: worker } = await supabase
-  .from(table)
-  .select("*")
-    .eq("id", person.id);
+    .from(table)
+    .select("*")
+    .eq("id", person.id as number | string);
 
-  const workerAttendance = worker[0][isPresentKey];
-
-  if (workerAttendance) return worker[0];
+  if (!worker || worker.length === 0) return null;
+  const workerAttendance = (worker[0] as Worker)[isPresentKey];
+  if (workerAttendance) return worker[0] as Worker;
 
   const dateUTC = new Date();
   const dateISO = dateUTC.toISOString();
@@ -20,16 +21,16 @@ const markPresent = async (person) => {
   const { data, error } = await supabase
     .from(table)
     .update({ [isPresentKey]: true, updatedat: dateISO })
-    .eq("id", person.id);
+    .eq("id", person.id as number | string);
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return data as Worker | null;
 };
 
-const manualAttendance = async (person) => {
+const manualAttendance = async (person: Worker): Promise<Worker[] | null> => {
   const { data, error } = await supabase
     .from(table)
     .insert({ ...person, validate: true })
@@ -39,27 +40,28 @@ const manualAttendance = async (person) => {
     throw new Error(error.message);
   }
 
-  return data;
+  return data as Worker[] | null;
 };
-const updateWorker = async (person) => {
-  const { id, ...rest} = person
+
+const updateWorker = async (person: Worker): Promise<Worker[] | null> => {
+  const { id, ...rest } = person;
   const { data, error } = await supabase
     .from(table)
     .update({ ...rest, ispresent: true })
-    .eq("id", person.id)
+    .eq("id", id as number | string)
     .select("*");
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return data as Worker[] | null;
 };
 
 const mutationDefaults = {
-  networkMode: "offlineFirst",
+  networkMode: "offlineFirst" as const,
   retry: 3,
-  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
+  retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 15000),
   gcTime: 0,
 };
 

@@ -1,15 +1,28 @@
-import React from "react";
 import Select from "./Dropdown";
 import { useNavigate } from "react-router-dom";
 import { departmentsWithTeams } from "../utils/options";
+import type { SelectOption } from "../types";
+
+type SummaryProps = {
+  totalWorkers: number;
+  presentWorkers: number;
+  absentWorkers: number;
+  confirmedPresent?: number;
+  confirmedAbsent?: number;
+  totalConfirmed?: number;
+  teams: SelectOption[];
+  onChange: (value: string) => void;
+  team: string;
+  title?: string;
+  type?: string;
+  onChangeDepartment?: (value: string) => void;
+  activeTeam?: string;
+};
 
 const Summary = ({
   totalWorkers,
   presentWorkers,
   absentWorkers,
-  confirmedPresent,
-  confirmedAbsent,
-  totalConfirmed,
   teams,
   onChange,
   team,
@@ -17,21 +30,20 @@ const Summary = ({
   type,
   onChangeDepartment,
   activeTeam,
-}) => {
+}: SummaryProps) => {
   const navigate = useNavigate();
   const percentagePresent = totalWorkers
     ? ((presentWorkers / totalWorkers) * 100).toFixed(2)
     : 0;
 
-  const getDepartment = () => {
-    const departments = departmentsWithTeams[activeTeam];
-    const options = departments
+  const getDepartment = (): SelectOption[] => {
+    const departments = activeTeam ? departmentsWithTeams[activeTeam] : null;
+    return departments
       ? departments.map((department) => ({
           label: department,
           value: department,
         }))
       : [];
-    return options;
   };
 
   return (
@@ -62,8 +74,8 @@ const Summary = ({
         )}
         <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-lg">
           <h2 className="text-xl font-bold text-center mb-4 px-24">
-            Workers Attendance Dashboard - {team === "All" ? "All Teams" : team}{" "}
-            - 21st February 2026
+            Workers Attendance Dashboard -{" "}
+            {team === "All" ? "All Teams" : team} - 21st February 2026
           </h2>
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="p-4 bg-blue-200 rounded-lg">
@@ -82,18 +94,6 @@ const Summary = ({
               <h3 className="text-lg font-semibold">% Present</h3>
               <p className="text-xl font-bold">{percentagePresent}%</p>
             </div>
-            {/* <div className="p-4 bg-purple-200 rounded-lg">
-            <h3 className="text-lg font-semibold">Confirmed Present</h3>
-            <p className="text-xl font-bold">{confirmedPresent}</p>
-            </div>
-          <div className="p-4 bg-orange-200 rounded-lg">
-            <h3 className="text-lg font-semibold">Confirmed Absent</h3>
-            <p className="text-xl font-bold">{confirmedAbsent}</p>
-          </div> */}
-            {/* <div className="col-span-2 p-4 bg-gray-300 rounded-lg">
-              <h3 className="text-lg font-semibold">Total Confirmed {title}</h3>
-              <p className="text-xl font-bold">{totalConfirmed}</p>
-            </div> */}
           </div>
         </div>
       </div>

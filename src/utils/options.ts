@@ -1,4 +1,6 @@
-export const departmentsWithTeams = {
+import type { SelectOption } from "../types";
+
+export const departmentsWithTeams: Record<string, string[]> = {
   Districts: [
     "Anagkazo Community",
     "Bethel Community",
@@ -123,59 +125,20 @@ export const departmentsWithTeams = {
     "Venue Management - Tosin Agbetuyi team",
     "Venue Management - Zeina team",
   ],
-  "Senior Leadership": [
-    "Directional leader",
-    "Pastoral Leaders",
-  ],
+  "Senior Leadership": ["Directional leader", "Pastoral Leaders"],
 };
 
-export const teamsSummary = [
-  {
-    label: "All Teams",
-    value: "All",
-  },
-  {
-    label: "Districts",
-    value: "Districts",
-  },
-  {
-    label: "General Service",
-    value: "General Service",
-  },
-  {
-    label: "Interactive Groups",
-    value: "Interactive Groups",
-  },
-  {
-    label: "Maturity",
-    value: "Maturity",
-  },
-  {
-    label: "Membership",
-    value: "Membership",
-  },
-  {
-    label: "Ministry",
-    value: "Ministry",
-  },
-  {
-    label: "Mission",
-    value: "Mission",
-  },
-  {
-    label: "NLP",
-    value: "NLP",
-  },
-  {
-    label: "Next Gen",
-    value: "Next Gen",
-  },
-  {
-    label: "Programs",
-    value: "Programs",
-  },
-  {
-    label: "Senior Leadership",
-    value: "Senior Leadership",
-  },
+export const teamsSummary: SelectOption[] = [
+  { label: "All Teams", value: "All" },
+  { label: "Districts", value: "Districts" },
+  { label: "General Service", value: "General Service" },
+  { label: "Interactive Groups", value: "Interactive Groups" },
+  { label: "Maturity", value: "Maturity" },
+  { label: "Membership", value: "Membership" },
+  { label: "Ministry", value: "Ministry" },
+  { label: "Mission", value: "Mission" },
+  { label: "NLP", value: "NLP" },
+  { label: "Next Gen", value: "Next Gen" },
+  { label: "Programs", value: "Programs" },
+  { label: "Senior Leadership", value: "Senior Leadership" },
 ];

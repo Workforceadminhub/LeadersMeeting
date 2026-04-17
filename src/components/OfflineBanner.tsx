@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const OfflineBanner = () => {
-  const [online, setOnline] = useState(
+  const [online, setOnline] = useState<boolean>(
     typeof navigator === "undefined" ? true : navigator.onLine
   );
 

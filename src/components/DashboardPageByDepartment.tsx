@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Summary from "./Summary";
 import supabase from "../services/supabase";
-import {
-  // departmentsWithTeams,
-  teamsSummary,
-} from "../utils/options";
+import { teamsSummary } from "../utils/options";
 
-function DashboardPageByDepartment() {
+const DashboardPageByDepartment = () => {
   const [totalWorkers, setTotalWorkers] = useState(0);
   const [presentWorkers, setPresentWorkers] = useState(0);
   const [absentWorkers, setAbsentWorkers] = useState(0);
@@ -15,39 +12,6 @@ function DashboardPageByDepartment() {
   const [totalConfirmed, setTotalConfirmed] = useState(0);
   const [teamName, setTeamName] = useState("All");
   const [activeTeam, setActiveTeam] = useState("All");
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const { count: total } = await supabase
-  //       .from("leader")
-  //       .select("*", { count: "exact", head: true });
-  //     setTotalWorkers(total || 0);
-
-  //     const { count: present } = await supabase
-  //       .from("leader")
-  //       .select("*", { count: "exact", head: true })
-  //       .eq("ispresent", true);
-  //     setPresentWorkers(present || 0);
-  //     setAbsentWorkers((total || 0) - (present || 0));
-
-  //     const { count: confirmed } = await supabase
-  //       .from("leader")
-  //       .select("*", { count: "exact", head: true })
-  //       .eq("isconfirmed", true);
-  //     setTotalConfirmed(confirmed || 0);
-
-  //     const { count: confirmedPres } = await supabase
-  //       .from("leader")
-  //       .select("*", { count: "exact", head: true })
-  //       .eq("isconfirmed", true)
-  //       .eq("ispresent", true);
-  //     setConfirmedPresent(confirmedPres || 0);
-
-  //     setConfirmedAbsent((confirmed || 0) - (confirmedPres || 0));
-  //   };
-
-  //   fetchData();
-  // }, [teamName]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,10 +62,10 @@ function DashboardPageByDepartment() {
     fetchData();
   }, [teamName]);
 
-  const onChange = (val) => {
+  const onChange = (val: string) => {
     setActiveTeam(val);
   };
-  const onChangeDepartment = (val) => {
+  const onChangeDepartment = (val: string) => {
     setTeamName(val);
   };
 
@@ -123,6 +87,6 @@ function DashboardPageByDepartment() {
       />
     </div>
   );
-}
+};
 
 export default DashboardPageByDepartment;

@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, type ReactNode, type FormEvent } from "react";
 
 const STORAGE_KEY = "leaders_admin_unlocked";
 
-const ProtectedRoute = ({ children }) => {
+type ProtectedRouteProps = {
+  children: ReactNode;
+};
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const expected = import.meta.env.REACT_APP_ADMIN_PASSCODE;
-  const [unlocked, setUnlocked] = useState(
+  const [unlocked, setUnlocked] = useState<boolean>(
     () =>
       typeof window !== "undefined" &&
       window.localStorage.getItem(STORAGE_KEY) === "1"
@@ -18,7 +22,10 @@ const ProtectedRoute = ({ children }) => {
         <div className="bg-white shadow-lg rounded-xl p-8 max-w-md w-full text-center">
           <h1 className="text-xl font-bold text-gray-800">Admin disabled</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Set <code className="rounded bg-gray-100 px-1">REACT_APP_ADMIN_PASSCODE</code>{" "}
+            Set{" "}
+            <code className="rounded bg-gray-100 px-1">
+              REACT_APP_ADMIN_PASSCODE
+            </code>{" "}
             in your deployment to enable the admin dashboard.
           </p>
         </div>
@@ -26,9 +33,9 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (unlocked) return children;
+  if (unlocked) return <>{children}</>;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (input === expected) {
       window.localStorage.setItem(STORAGE_KEY, "1");

@@ -3,7 +3,9 @@ import { registerSW } from "virtual:pwa-register";
 
 const UpdatePrompt = () => {
   const [needRefresh, setNeedRefresh] = useState(false);
-  const [updateSW, setUpdateSW] = useState(() => () => {});
+  const [updateSW, setUpdateSW] = useState<(reload?: boolean) => Promise<void>>(
+    () => async () => {}
+  );
 
   useEffect(() => {
     const update = registerSW({

@@ -23,7 +23,8 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "update:leaders": "node scripts/updateLeaders.cjs",
     "login": "supabase login",
@@ -31,11 +32,15 @@
     "link": "supabase link"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.24",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "supabase": "^2.12.1",
     "tailwindcss": "^3.4.10",
+    "typescript": "^6.0.3",
     "vite": "^5.4.11"
   }
 }

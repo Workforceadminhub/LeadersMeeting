@@ -1,6 +1,6 @@
 import { useSearchWorker } from "../services/search";
 import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   useManualAttendance,
   useWorkerUpdate,
@@ -10,23 +10,34 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import WorkerForm from "./WorkerForm";
 import { useMeetingTitle } from "../services/settings";
+import type { Worker, WorkerFormValues } from "../types";
 
 const CONFIRMATION_TIMEOUT_MS = 4500;
+
+type Confirmation = {
+  name: string;
+  team: string;
+  department: string;
+  role: string;
+  timestamp: Date;
+};
 
 const Attendance = () => {
   const { debouncedSearch, search: searchValue } = useDebouncedSearch();
   const { data: filteredPeople, isLoading } = useSearchWorker(searchValue);
-  const { mutate: manualAttendanceMutation, isPending: isCreating_submitting } =
+  const { mutate: manualAttendanceMutation, isPending: isCreatingSubmitting } =
     useManualAttendance();
-  const { mutate: updateWorker, isPending: isEditing_submitting } =
+  const { mutate: updateWorker, isPending: isEditingSubmitting } =
     useWorkerUpdate();
 
   const [query, setQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editInitialValues, setEditInitialValues] = useState(null);
-  const [confirmation, setConfirmation] = useState(null);
-  const confirmationTimer = useRef(null);
+  const [editInitialValues, setEditInitialValues] = useState<Worker | null>(
+    null
+  );
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const confirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
 
   const { title } = useMeetingTitle();
@@ -37,7 +48,7 @@ const Attendance = () => {
     };
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
     debouncedSearch(value.startsWith("0") ? value.replace(/^0/, "") : value);
@@ -50,7 +61,7 @@ const Attendance = () => {
     setEditInitialValues(null);
   };
 
-  const showConfirmation = (person) => {
+  const showConfirmation = (person: WorkerFormValues) => {
     setConfirmation({
       name: `${person.firstname || ""} ${person.lastname || ""}`.trim(),
       team: person.team,
@@ -71,8 +82,8 @@ const Attendance = () => {
     setConfirmation(null);
   };
 
-  const handleSave = (values) => {
-    const payload = {
+  const handleSave = (values: WorkerFormValues) => {
+    const payload: Worker = {
       ...values,
       fullname: `${values.firstname.trim()} ${values.lastname.trim()}`.trim(),
       ispresent: true,
@@ -81,7 +92,7 @@ const Attendance = () => {
       onSuccess() {
         queryClient.invalidateQueries();
         setIsCreating(false);
-        showConfirmation(payload);
+        showConfirmation(values);
       },
       onError() {
         toast.error("Could not save attendance. Try again.");
@@ -89,9 +100,9 @@ const Attendance = () => {
     });
   };
 
-  const handleUpdate = (values) => {
-    const payload = {
-      ...editInitialValues,
+  const handleUpdate = (values: WorkerFormValues) => {
+    const payload: Worker = {
+      ...(editInitialValues || {}),
       ...values,
       fullname: `${values.firstname.trim()} ${values.lastname.trim()}`.trim(),
       ispresent: true,
@@ -101,7 +112,7 @@ const Attendance = () => {
         queryClient.invalidateQueries();
         setIsEditing(false);
         setEditInitialValues(null);
-        showConfirmation(payload);
+        showConfirmation(values);
       },
       onError() {
         toast.error("Could not mark attendance. Try again.");
@@ -109,12 +120,12 @@ const Attendance = () => {
     });
   };
 
-  const handleEdit = (person) => {
+  const handleEdit = (person: Worker) => {
     setEditInitialValues(person);
     setIsEditing(true);
   };
 
-  const formatTime = (date) =>
+  const formatTime = (date: Date) =>
     date.toLocaleTimeString(undefined, {
       hour: "numeric",
       minute: "2-digit",
@@ -182,10 +193,11 @@ const Attendance = () => {
               {!isCreating &&
               !isEditing &&
               searchValue &&
-              filteredPeople?.length > 0 ? (
+              filteredPeople &&
+              filteredPeople.length > 0 ? (
                 <div>
                   <ul className="space-y-2">
-                    {filteredPeople?.map((person, index) => (
+                    {filteredPeople.map((person, index) => (
                       <li
                         key={index}
                         className="p-4 border border-gray-200 rounded-lg flex justify-between items-center"
@@ -269,7 +281,7 @@ const Attendance = () => {
                   <WorkerForm
                     mode="create"
                     initialValues={null}
-                    isSubmitting={isCreating_submitting}
+                    isSubmitting={isCreatingSubmitting}
                     submitLabel="Save"
                     onSubmit={handleSave}
                     onCancel={resetCreate}
@@ -285,7 +297,7 @@ const Attendance = () => {
                   <WorkerForm
                     mode="edit"
                     initialValues={editInitialValues}
-                    isSubmitting={isEditing_submitting}
+                    isSubmitting={isEditingSubmitting}
                     submitLabel="Mark Attendance"
                     onSubmit={handleUpdate}
                     onCancel={resetEdit}
