@@ -52,7 +52,8 @@ const Attendance = () => {
   const [activeTeam, setActiveTeam] = useState(activePerson.team);
 
   // trigger deployment comment
-  const title = "Workers Meeting - Saturday 18th April 2026";
+  const title =
+    "Leaders Meeting with Pastor Mayowa Agboade\nSaturday 18th April 2026";
 
   const handleSearch = (e) => {
     setQuery(e.target.value);
@@ -275,7 +276,9 @@ const Attendance = () => {
           {/* <h1 className="text-2xl font-bold mt-4">
             Harvesters International Christian Centre, Gbagada campus
           </h1> */}
-          <h2 className="text-2xl font-bold text-gray-500 mt-4">{title}</h2>
+          <h2 className="text-2xl font-bold text-gray-500 mt-4 whitespace-pre-line">
+            {title}
+          </h2>
         </header>
         <div className="bg-white shadow-lg rounded-xl p-6 mb-24 mt-12">
           {/* Search Input */}
