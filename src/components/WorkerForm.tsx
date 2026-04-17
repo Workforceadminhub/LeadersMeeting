@@ -123,16 +123,21 @@ const WorkerForm = ({
     setValue,
     getValues,
     reset,
+    trigger,
     formState: { errors, isValid },
   } = useForm<WorkerFormValues>({
     resolver: zodResolver(workerSchema),
-    mode: "onBlur",
+    mode: "onTouched",
     defaultValues: { ...defaultWorkerValues, ...initialValues },
   });
 
   useEffect(() => {
     reset({ ...defaultWorkerValues, ...initialValues });
-  }, [initialValues, reset]);
+    // Validate the pre-filled values immediately so isValid reflects
+    // reality and any problems (e.g. a 10-digit phone) are surfaced
+    // right away instead of only after the user touches a field.
+    void trigger();
+  }, [initialValues, reset, trigger]);
 
   const capitalizeOnBlur = (field: "firstname" | "lastname") => () => {
     const current = getValues(field) || "";
