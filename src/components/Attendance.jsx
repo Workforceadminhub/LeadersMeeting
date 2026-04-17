@@ -9,6 +9,7 @@ import { CheckBadgeIcon } from "@heroicons/react/16/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import WorkerForm from "./WorkerForm";
+import { useMeetingTitle } from "../services/settings";
 
 const CONFIRMATION_TIMEOUT_MS = 4500;
 
@@ -28,8 +29,7 @@ const Attendance = () => {
   const confirmationTimer = useRef(null);
   const queryClient = useQueryClient();
 
-  const title =
-    "Leaders Meeting with Pastor Mayowa Agboade\nSaturday 18th April 2026";
+  const { title } = useMeetingTitle();
 
   useEffect(() => {
     return () => {
