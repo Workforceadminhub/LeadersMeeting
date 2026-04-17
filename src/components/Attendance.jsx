@@ -1,6 +1,6 @@
 import { useSearchWorker } from "../services/search";
 import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useManualAttendance,
   useWorkerUpdate,
@@ -8,73 +8,34 @@ import {
 import { CheckBadgeIcon } from "@heroicons/react/16/solid";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import capitalize from "lodash/capitalize";
-import { workerrolesoptions } from "../utils/teams";
-import Select from "./Dropdown";
-import { departmentsWithTeams, teamsSummary } from "../utils/options";
+import WorkerForm from "./WorkerForm";
 
-const emptyPerson = {
-  firstname: "",
-  lastname: "",
-  phonenumber: "",
-  department: "",
-  team: "",
-  fullname: "",
-  workerrole: "",
-};
-
-const PHONE_LENGTH = 11;
 const CONFIRMATION_TIMEOUT_MS = 4500;
-const isValidPhone = (value) => /^\d{11}$/.test(value || "");
-const onlyDigits = (value) => (value || "").replace(/\D/g, "");
 
 const Attendance = () => {
   const { debouncedSearch, search: searchValue } = useDebouncedSearch();
   const { data: filteredPeople, isLoading } = useSearchWorker(searchValue);
-  const { mutate: manualAttendanceMutation } = useManualAttendance();
-  const { mutate: updateWorker } = useWorkerUpdate();
+  const { mutate: manualAttendanceMutation, isPending: isCreating_submitting } =
+    useManualAttendance();
+  const { mutate: updateWorker, isPending: isEditing_submitting } =
+    useWorkerUpdate();
 
   const [query, setQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [manuallySaving, setManuallySaving] = useState(false);
-  const [isEditSaving, setIsEditSaving] = useState(false);
+  const [editInitialValues, setEditInitialValues] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const confirmationTimer = useRef(null);
   const queryClient = useQueryClient();
 
-  const [newPerson, setNewPerson] = useState(emptyPerson);
-  const [activePerson, setActivePerson] = useState(emptyPerson);
-  const [activeTeam, setActiveTeam] = useState(activePerson.team);
-
   const title =
     "Leaders Meeting with Pastor Mayowa Agboade\nSaturday 18th April 2026";
-
-  useEffect(() => {
-    setActiveTeam(activePerson.team);
-  }, [activePerson.team]);
 
   useEffect(() => {
     return () => {
       if (confirmationTimer.current) clearTimeout(confirmationTimer.current);
     };
   }, []);
-
-  const teamOptions = useMemo(
-    () => [
-      { label: "Choose team", value: "" },
-      ...teamsSummary.filter((t) => t.value !== "All"),
-    ],
-    []
-  );
-
-  const roleOptions = useMemo(
-    () => [
-      { label: "Choose role", value: "" },
-      ...workerrolesoptions.filter((o) => o.value !== "All"),
-    ],
-    []
-  );
 
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -83,18 +44,10 @@ const Attendance = () => {
   };
 
   const handleCreate = () => setIsCreating(true);
-  const resetCreate = () => {
-    setIsCreating(false);
-    setNewPerson(emptyPerson);
-  };
+  const resetCreate = () => setIsCreating(false);
   const resetEdit = () => {
     setIsEditing(false);
-    setActiveTeam("");
-  };
-
-  const capitalizeField = (setter, field) => (e) => {
-    const value = capitalize(e.target.value.trim());
-    setter((prev) => ({ ...prev, [field]: value }));
+    setEditInitialValues(null);
   };
 
   const showConfirmation = (person) => {
@@ -118,102 +71,47 @@ const Attendance = () => {
     setConfirmation(null);
   };
 
-  const handleSave = () => {
-    if (!isCreateFormValid) return;
-
-    setManuallySaving(true);
+  const handleSave = (values) => {
     const payload = {
-      ...newPerson,
-      fullname:
-        `${newPerson.firstname.trim()} ${newPerson.lastname.trim()}`.trim(),
+      ...values,
+      fullname: `${values.firstname.trim()} ${values.lastname.trim()}`.trim(),
       ispresent: true,
     };
     manualAttendanceMutation(payload, {
       onSuccess() {
         queryClient.invalidateQueries();
-        setNewPerson(emptyPerson);
-        setManuallySaving(false);
         setIsCreating(false);
         showConfirmation(payload);
       },
-      onError(error) {
+      onError() {
         toast.error("Could not save attendance. Try again.");
-        setManuallySaving(false);
-        throw error;
       },
     });
   };
 
-  const handleUpdate = () => {
-    if (!isEditFormValid) return;
-
-    setIsEditSaving(true);
+  const handleUpdate = (values) => {
     const payload = {
-      ...activePerson,
-      fullname:
-        `${activePerson.firstname.trim()} ${activePerson.lastname.trim()}`.trim(),
+      ...editInitialValues,
+      ...values,
+      fullname: `${values.firstname.trim()} ${values.lastname.trim()}`.trim(),
       ispresent: true,
     };
     updateWorker(payload, {
       onSuccess() {
         queryClient.invalidateQueries();
-        setActivePerson(emptyPerson);
-        setIsEditSaving(false);
         setIsEditing(false);
+        setEditInitialValues(null);
         showConfirmation(payload);
       },
-      onError(error) {
+      onError() {
         toast.error("Could not mark attendance. Try again.");
-        setIsEditSaving(false);
-        throw error;
       },
     });
   };
 
   const handleEdit = (person) => {
+    setEditInitialValues(person);
     setIsEditing(true);
-    setActivePerson(person);
-  };
-
-  const getDepartmentOptions = () => {
-    const departments = departmentsWithTeams[activeTeam || activePerson.team];
-    const options = departments
-      ? departments.map((department) => ({
-          label: department,
-          value: department,
-        }))
-      : [];
-
-    return [{ label: "Choose department", value: "" }].concat(options);
-  };
-
-  const isPersonFormValid = (person) =>
-    Boolean(
-      person.firstname?.trim() &&
-        person.lastname?.trim() &&
-        isValidPhone(person.phonenumber) &&
-        person.team &&
-        person.team !== "All" &&
-        person.department &&
-        person.department !== "All" &&
-        departmentsWithTeams[person.team]?.includes(person.department) &&
-        person.workerrole &&
-        person.workerrole !== "All"
-    );
-
-  const isCreateFormValid = isPersonFormValid(newPerson);
-  const isEditFormValid = isPersonFormValid(activePerson);
-
-  const renderPhoneError = (phonenumber) => {
-    if (!phonenumber) return null;
-    if (!isValidPhone(phonenumber)) {
-      return (
-        <p className="mt-1 text-xs text-red-600" role="alert">
-          Phone number must be exactly {PHONE_LENGTH} digits
-        </p>
-      );
-    }
-    return null;
   };
 
   const formatTime = (date) =>
@@ -368,151 +266,14 @@ const Attendance = () => {
                   <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
                     Manually add attendance
                   </h2>
-                  <div className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="create-firstname"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        First name
-                      </label>
-                      <input
-                        id="create-firstname"
-                        type="text"
-                        autoComplete="given-name"
-                        placeholder="First Name"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={newPerson.firstname}
-                        onChange={(e) =>
-                          setNewPerson({
-                            ...newPerson,
-                            firstname: e.target.value,
-                          })
-                        }
-                        onBlur={capitalizeField(setNewPerson, "firstname")}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="create-lastname"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        Last name
-                      </label>
-                      <input
-                        id="create-lastname"
-                        type="text"
-                        autoComplete="family-name"
-                        placeholder="Last Name"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={newPerson.lastname}
-                        onChange={(e) =>
-                          setNewPerson({
-                            ...newPerson,
-                            lastname: e.target.value,
-                          })
-                        }
-                        onBlur={capitalizeField(setNewPerson, "lastname")}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="create-phone"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        Phone number
-                      </label>
-                      <input
-                        id="create-phone"
-                        type="tel"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        pattern="\d{11}"
-                        maxLength={PHONE_LENGTH}
-                        placeholder="11-digit phone number"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={newPerson.phonenumber}
-                        onChange={(e) =>
-                          setNewPerson({
-                            ...newPerson,
-                            phonenumber: onlyDigits(e.target.value).slice(
-                              0,
-                              PHONE_LENGTH
-                            ),
-                          })
-                        }
-                        aria-invalid={
-                          newPerson.phonenumber &&
-                          !isValidPhone(newPerson.phonenumber)
-                            ? true
-                            : undefined
-                        }
-                      />
-                      {renderPhoneError(newPerson.phonenumber)}
-                    </div>
-
-                    <Select
-                      label="Team"
-                      options={teamOptions}
-                      value={newPerson.team}
-                      onChange={(value) => {
-                        setActiveTeam(value);
-                        setNewPerson({
-                          ...newPerson,
-                          team: value,
-                          department: "",
-                        });
-                      }}
-                      className="mb-3"
-                    />
-
-                    <Select
-                      label="Department"
-                      options={getDepartmentOptions()}
-                      value={newPerson.department}
-                      onChange={(value) =>
-                        setNewPerson({ ...newPerson, department: value || "" })
-                      }
-                      className="mb-3"
-                    />
-
-                    <Select
-                      label="Role"
-                      options={roleOptions}
-                      value={newPerson.workerrole}
-                      onChange={(value) =>
-                        setNewPerson({ ...newPerson, workerrole: value })
-                      }
-                      className="mb-3"
-                    />
-
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={resetCreate}
-                        className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400 focus:outline-none"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() =>
-                          !manuallySaving && isCreateFormValid
-                            ? handleSave()
-                            : undefined
-                        }
-                        disabled={!isCreateFormValid || manuallySaving}
-                        aria-disabled={!isCreateFormValid || manuallySaving}
-                        className={`w-full py-2 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none ${
-                          !isCreateFormValid || manuallySaving
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
-                        }`}
-                      >
-                        {manuallySaving ? "Saving" : "Save"}
-                      </button>
-                    </div>
-                  </div>
+                  <WorkerForm
+                    mode="create"
+                    initialValues={null}
+                    isSubmitting={isCreating_submitting}
+                    submitLabel="Save"
+                    onSubmit={handleSave}
+                    onCancel={resetCreate}
+                  />
                 </div>
               )}
 
@@ -521,154 +282,14 @@ const Attendance = () => {
                   <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
                     Update worker info
                   </h2>
-                  <div className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="edit-firstname"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        First name
-                      </label>
-                      <input
-                        id="edit-firstname"
-                        type="text"
-                        autoComplete="given-name"
-                        placeholder="First Name"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={activePerson.firstname}
-                        onChange={(e) =>
-                          setActivePerson({
-                            ...activePerson,
-                            firstname: e.target.value,
-                          })
-                        }
-                        onBlur={capitalizeField(setActivePerson, "firstname")}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="edit-lastname"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        Last name
-                      </label>
-                      <input
-                        id="edit-lastname"
-                        type="text"
-                        autoComplete="family-name"
-                        placeholder="Last Name"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={activePerson.lastname}
-                        onChange={(e) =>
-                          setActivePerson({
-                            ...activePerson,
-                            lastname: e.target.value,
-                          })
-                        }
-                        onBlur={capitalizeField(setActivePerson, "lastname")}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="edit-phone"
-                        className="text-sm mb-2 block text-gray-700"
-                      >
-                        Phone number
-                      </label>
-                      <input
-                        id="edit-phone"
-                        type="tel"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        pattern="\d{11}"
-                        maxLength={PHONE_LENGTH}
-                        placeholder="11-digit phone number"
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        value={activePerson.phonenumber}
-                        onChange={(e) =>
-                          setActivePerson({
-                            ...activePerson,
-                            phonenumber: onlyDigits(e.target.value).slice(
-                              0,
-                              PHONE_LENGTH
-                            ),
-                          })
-                        }
-                        aria-invalid={
-                          activePerson.phonenumber &&
-                          !isValidPhone(activePerson.phonenumber)
-                            ? true
-                            : undefined
-                        }
-                      />
-                      {renderPhoneError(activePerson.phonenumber)}
-                    </div>
-
-                    <Select
-                      label="Team"
-                      options={teamOptions}
-                      value={activePerson.team}
-                      onChange={(value) => {
-                        setActiveTeam(value);
-                        setActivePerson({
-                          ...activePerson,
-                          team: value,
-                          department: "",
-                        });
-                      }}
-                      className="mb-3"
-                    />
-
-                    <Select
-                      label="Department"
-                      options={getDepartmentOptions()}
-                      value={activePerson.department}
-                      onChange={(value) =>
-                        setActivePerson({
-                          ...activePerson,
-                          department: value || "",
-                        })
-                      }
-                      className="mb-3"
-                    />
-
-                    <Select
-                      label="Role"
-                      options={roleOptions}
-                      value={activePerson.workerrole}
-                      onChange={(value) =>
-                        setActivePerson({ ...activePerson, workerrole: value })
-                      }
-                      className="mb-3"
-                    />
-
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={resetEdit}
-                        className="w-full py-2 bg-red-500 text-white rounded-lg cursor-pointer hover:bg-red-600 focus:ring-2 focus:ring-red-400 focus:outline-none"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() =>
-                          !isEditSaving && isEditFormValid
-                            ? handleUpdate()
-                            : undefined
-                        }
-                        disabled={!isEditFormValid || isEditSaving}
-                        aria-disabled={!isEditFormValid || isEditSaving}
-                        className={`w-full py-2 text-white rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none ${
-                          !isEditFormValid || isEditSaving
-                            ? "bg-gray-300 cursor-not-allowed"
-                            : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
-                        }`}
-                      >
-                        {isEditSaving ? "Marking..." : "Mark Attendance"}
-                      </button>
-                    </div>
-                  </div>
+                  <WorkerForm
+                    mode="edit"
+                    initialValues={editInitialValues}
+                    isSubmitting={isEditing_submitting}
+                    submitLabel="Mark Attendance"
+                    onSubmit={handleUpdate}
+                    onCancel={resetEdit}
+                  />
                 </div>
               )}
             </>

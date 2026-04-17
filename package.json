@@ -5,6 +5,7 @@
   "type": "module",
   "dependencies": {
     "@heroicons/react": "^2.1.5",
+    "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.45.3",
     "@tanstack/react-query": "^5.55.2",
     "clsx": "^2.1.1",
@@ -12,10 +13,12 @@
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.72.1",
     "react-loading-skeleton": "^3.4.0",
     "react-router-dom": "^6.26.1",
     "react-toastify": "^10.0.5",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "start": "vite",
