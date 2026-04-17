@@ -30,7 +30,6 @@ export const departmentsWithTeams = {
     "Courses HSDC",
     "Discipleship Event",
     "Group Partnership",
-    "Membership",
     "Prayer and Bible Study",
   ],
   Membership: [
@@ -45,6 +44,7 @@ export const departmentsWithTeams = {
     "Interactors",
     "Membership Admin",
     "New Convert",
+    "Sub team heads Membership",
     "Weddings",
   ],
   Ministry: [
@@ -66,14 +66,14 @@ export const departmentsWithTeams = {
   ],
   Mission: [
     "Evangelism",
-    "God's Encounter",
+    "God's encounter",
     "HSAP",
     "Invest and Invite",
-    "NLP",
     "Publicity",
     "Sub team-Missions",
     "Target Missions",
   ],
+  NLP: ["NLP"],
   "Next Gen": [
     "Administration - Kidszone",
     "Administration - Stirhouse",
@@ -89,6 +89,7 @@ export const departmentsWithTeams = {
     "Emerald ET",
     "Pearl ET",
     "Sapphire ET",
+    "Musicians",
     "Greeters - Team Jireh",
     "Greeters - Team Nissi",
     "Greeters - Team Rapha",
@@ -104,7 +105,6 @@ export const departmentsWithTeams = {
     "Media-Text & Timing",
     "Media-Video",
     "Media-Visuals",
-    "Musicians",
     "Program Management",
     "Programs Admin Team",
     "Protocol",
@@ -124,7 +124,7 @@ export const departmentsWithTeams = {
     "Venue Management - Zeina team",
   ],
   "Senior Leadership": [
-    "Directional Leaders",
+    "Directional leader",
     "Pastoral Leaders",
   ],
 };
@@ -161,6 +161,10 @@ export const teamsSummary = [
   {
     label: "Mission",
     value: "Mission",
+  },
+  {
+    label: "NLP",
+    value: "NLP",
   },
   {
     label: "Next Gen",

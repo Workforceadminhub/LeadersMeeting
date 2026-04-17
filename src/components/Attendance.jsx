@@ -52,7 +52,7 @@ const Attendance = () => {
   const [activeTeam, setActiveTeam] = useState(activePerson.team);
 
   // trigger deployment comment
-  const title = "Workers Meeting - Saturday 21st February 2026";
+  const title = "Workers Meeting - Saturday 18th April 2026";
 
   const handleSearch = (e) => {
     setQuery(e.target.value);

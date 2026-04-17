@@ -48,8 +48,10 @@ export const leaderTeams = [
   { label: "Membership", value: "Membership" },
   { label: "Ministry", value: "Ministry" },
   { label: "Mission", value: "Mission" },
+  { label: "NLP", value: "NLP" },
   { label: "Next Gen", value: "Next Gen" },
   { label: "Programs", value: "Programs" },
+  { label: "Senior Leadership", value: "Senior Leadership" },
 ];
 
 export const workerrolesoptions = [
