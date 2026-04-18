@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import capitalize from "lodash/capitalize";
 import Select from "./Dropdown";
 import {
+  GENDER_OPTIONS,
   PHONE_LENGTH,
   defaultWorkerValues,
   workerSchema,
@@ -116,6 +117,14 @@ const WorkerForm = ({
     []
   );
 
+  const genderOptions = useMemo(
+    () => [
+      { label: "Choose gender", value: "" },
+      ...GENDER_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
+    ],
+    []
+  );
+
   const {
     control,
     register,
@@ -201,6 +210,23 @@ const WorkerForm = ({
           </p>
         )}
       </div>
+
+      <Controller
+        control={control}
+        name="gender"
+        render={({ field, fieldState }) => (
+          <Select
+            label="Gender"
+            options={genderOptions}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            hasErrors={Boolean(fieldState.error)}
+            error={fieldState.error?.message}
+            className="mb-3"
+          />
+        )}
+      />
 
       <div>
         <label

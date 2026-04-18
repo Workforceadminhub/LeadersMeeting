@@ -8,10 +8,24 @@ const validRoleValues = workerrolesoptions
   .map((option) => option.value)
   .filter((value) => value !== "All");
 
+export const GENDER_OPTIONS = [
+  { label: "Male", value: "Male" },
+  { label: "Female", value: "Female" },
+] as const;
+
+const genderValues = GENDER_OPTIONS.map((option) => option.value);
+
 export const workerSchema = z
   .object({
     firstname: z.string().trim().min(1, "First name is required"),
     lastname: z.string().trim().min(1, "Last name is required"),
+    gender: z
+      .string()
+      .min(1, "Gender is required")
+      .refine(
+        (value) => (genderValues as readonly string[]).includes(value),
+        "Choose a valid gender"
+      ),
     phonenumber: z.string().superRefine((value, ctx) => {
       if (!value) {
         ctx.addIssue({
@@ -77,6 +91,7 @@ export const workerSchema = z
 export const defaultWorkerValues: z.infer<typeof workerSchema> = {
   firstname: "",
   lastname: "",
+  gender: "",
   phonenumber: "",
   team: "",
   department: "",
