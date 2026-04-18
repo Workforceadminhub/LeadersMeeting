@@ -4,6 +4,8 @@ import { SkeletonTheme } from "react-loading-skeleton";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminReport from "./components/AdminReport";
+import AdminDirectoratePage from "./components/AdminDirectoratePage";
+import AdminTeamPage from "./components/AdminTeamPage";
 import DashboardPageByDepartment from "./components/DashboardPageByDepartment";
 import Attendance from "./components/Attendance";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -34,6 +36,22 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AdminReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/directorate/:slug"
+                element={
+                  <ProtectedRoute>
+                    <AdminDirectoratePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/team/:slug"
+                element={
+                  <ProtectedRoute>
+                    <AdminTeamPage />
                   </ProtectedRoute>
                 }
               />
