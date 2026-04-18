@@ -42,6 +42,7 @@ const AdminDirectoratePage = () => {
             kind: "directorate",
             label: dir.label,
             filters: dir.rows.map((r) => r.filter),
+            teams: dir.rows.map((r) => ({ label: r.label, filter: r.filter })),
           }}
           onClose={() => navigate("/admin/summary")}
         />

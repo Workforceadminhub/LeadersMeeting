@@ -1,10 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLeaderDetails, type LeaderDetail } from "../services/leaderDetails";
-import type { ReportRowFilter } from "../utils/report";
+import { rowMatcher, type ReportRowFilter } from "../utils/report";
+
+type TeamChoice = { label: string; filter: ReportRowFilter };
 
 type Scope =
   | { kind: "row"; label: string; filter: ReportRowFilter; context?: string }
-  | { kind: "directorate"; label: string; filters: ReportRowFilter[] };
+  | {
+      kind: "directorate";
+      label: string;
+      filters: ReportRowFilter[];
+      teams: TeamChoice[];
+    };
 
 type SortKey =
   | "name"
@@ -90,10 +97,20 @@ const TeamDetails = ({
   const filters = scope.kind === "row" ? [scope.filter] : scope.filters;
   const { data, isLoading, isError, error } = useLeaderDetails(filters);
 
+  const isDirectorate = scope.kind === "directorate";
+  const teamChoices = isDirectorate ? scope.teams : [];
+
+  const [teamLabel, setTeamLabel] = useState<string>("");
   const [department, setDepartment] = useState<string>("");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const activeTeamFilter = useMemo(() => {
+    if (!teamLabel) return null;
+    const match = teamChoices.find((t) => t.label === teamLabel);
+    return match ? rowMatcher(match.filter) : null;
+  }, [teamLabel, teamChoices]);
 
   const toggleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -104,18 +121,31 @@ const TeamDetails = ({
     }
   };
 
+  const teamNarrowed = useMemo(() => {
+    if (!data) return [] as LeaderDetail[];
+    if (!activeTeamFilter) return data;
+    return data.filter(activeTeamFilter);
+  }, [data, activeTeamFilter]);
+
   const departmentOptions = useMemo(() => {
-    if (!data) return [] as string[];
+    if (!teamNarrowed) return [] as string[];
     const set = new Set<string>();
-    for (const r of data) {
+    for (const r of teamNarrowed) {
       if (r.department) set.add(r.department);
     }
     return Array.from(set).sort();
-  }, [data]);
+  }, [teamNarrowed]);
+
+  // If the currently-picked department disappears after a team change,
+  // reset it so we don't silently filter everything out.
+  useEffect(() => {
+    if (department && !departmentOptions.includes(department)) {
+      setDepartment("");
+    }
+  }, [department, departmentOptions]);
 
   const filtered = useMemo(() => {
-    if (!data) return [] as LeaderDetail[];
-    const rows = data.filter((r) => {
+    const rows = teamNarrowed.filter((r) => {
       // Only show workers who are marked present.
       if (r.ispresent !== true) return false;
       if (department && r.department !== department) return false;
@@ -132,7 +162,7 @@ const TeamDetails = ({
         compare(getSortValue(a, sortKey), getSortValue(b, sortKey)) *
         dirMultiplier
     );
-  }, [data, department, search, sortKey, sortDir]);
+  }, [teamNarrowed, department, search, sortKey, sortDir]);
 
   const counts = useMemo(() => {
     if (!data) return { total: 0, present: 0, absent: 0, confirmed: 0 };
@@ -198,7 +228,28 @@ const TeamDetails = ({
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-3 mb-4">
+      <div
+        className={`grid gap-3 mb-4 ${
+          isDirectorate ? "md:grid-cols-3" : "md:grid-cols-2"
+        }`}
+      >
+        {isDirectorate && (
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Team</label>
+            <select
+              value={teamLabel}
+              onChange={(e) => setTeamLabel(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            >
+              <option value="">All teams</option>
+              {teamChoices.map((t) => (
+                <option key={t.label} value={t.label}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="block text-xs text-gray-600 mb-1">Department</label>
           <select
