@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLeaderDetails } from "../services/leaderDetails";
+import { useLeaderDetails, type LeaderDetail } from "../services/leaderDetails";
 import type { ReportRowFilter } from "../utils/report";
 
 type Scope =
@@ -15,6 +15,80 @@ const STATUS_LABEL: Record<StatusFilter, string> = {
   confirmed: "Confirmed",
 };
 
+type SortKey =
+  | "name"
+  | "phone"
+  | "department"
+  | "role"
+  | "gender"
+  | "confirmed"
+  | "present"
+  | "markedat";
+
+type SortDir = "asc" | "desc";
+
+const SORT_COLUMNS: Array<{
+  key: SortKey;
+  label: string;
+  align: "left" | "center";
+}> = [
+  { key: "name", label: "Name", align: "left" },
+  { key: "phone", label: "Phone", align: "left" },
+  { key: "department", label: "Department", align: "left" },
+  { key: "role", label: "Role", align: "left" },
+  { key: "gender", label: "Gender", align: "left" },
+  { key: "confirmed", label: "Confirmed", align: "center" },
+  { key: "present", label: "Present", align: "center" },
+  { key: "markedat", label: "Marked at", align: "left" },
+];
+
+const getSortValue = (r: LeaderDetail, key: SortKey): string | number => {
+  switch (key) {
+    case "name":
+      return `${r.lastname || ""} ${r.firstname || ""}`.trim().toLowerCase();
+    case "phone":
+      return (r.phonenumber || "").toLowerCase();
+    case "department":
+      return (r.department || "").toLowerCase();
+    case "role":
+      return (r.workerrole || "").toLowerCase();
+    case "gender":
+      return (r.gender || "").toLowerCase();
+    case "confirmed":
+      return r.isconfirmed ? 1 : 0;
+    case "present":
+      return r.ispresent ? 1 : 0;
+    case "markedat":
+      return r.updatedat ? new Date(r.updatedat).getTime() : 0;
+  }
+};
+
+const compare = (a: string | number, b: string | number): number => {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b));
+};
+
+const SortArrow = ({
+  active,
+  dir,
+}: {
+  active: boolean;
+  dir: SortDir;
+}) => {
+  if (!active) {
+    return (
+      <span aria-hidden="true" className="ml-1 text-gray-400">
+        ⇅
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden="true" className="ml-1 text-gray-800">
+      {dir === "asc" ? "▲" : "▼"}
+    </span>
+  );
+};
+
 const TeamDetails = ({
   scope,
   onClose,
@@ -22,13 +96,23 @@ const TeamDetails = ({
   scope: Scope;
   onClose: () => void;
 }) => {
-  const filters =
-    scope.kind === "row" ? [scope.filter] : scope.filters;
+  const filters = scope.kind === "row" ? [scope.filter] : scope.filters;
   const { data, isLoading, isError, error } = useLeaderDetails(filters);
 
   const [department, setDepartment] = useState<string>("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   const departmentOptions = useMemo(() => {
     if (!data) return [] as string[];
@@ -40,8 +124,8 @@ const TeamDetails = ({
   }, [data]);
 
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return data.filter((r) => {
+    if (!data) return [] as LeaderDetail[];
+    const rows = data.filter((r) => {
       if (department && r.department !== department) return false;
       if (status === "present" && r.ispresent !== true) return false;
       if (status === "absent" && r.ispresent === true) return false;
@@ -53,7 +137,13 @@ const TeamDetails = ({
       }
       return true;
     });
-  }, [data, department, status, search]);
+    const dirMultiplier = sortDir === "asc" ? 1 : -1;
+    return [...rows].sort(
+      (a, b) =>
+        compare(getSortValue(a, sortKey), getSortValue(b, sortKey)) *
+        dirMultiplier
+    );
+  }, [data, department, status, search, sortKey, sortDir]);
 
   const counts = useMemo(() => {
     if (!data) return { total: 0, present: 0, absent: 0, confirmed: 0 };
@@ -167,33 +257,64 @@ const TeamDetails = ({
         <table className="min-w-full border-collapse text-sm">
           <thead className="bg-amber-50">
             <tr>
-              <th className="border border-gray-300 px-3 py-2 text-left">Name</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Phone</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Department</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Role</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Gender</th>
-              <th className="border border-gray-300 px-3 py-2 text-center">Confirmed</th>
-              <th className="border border-gray-300 px-3 py-2 text-center">Present</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Marked at</th>
+              {SORT_COLUMNS.map((col) => {
+                const isActive = sortKey === col.key;
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    aria-sort={
+                      isActive
+                        ? sortDir === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                    className={`border border-gray-300 px-3 py-2 select-none ${
+                      col.align === "center" ? "text-center" : "text-left"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSort(col.key)}
+                      className={`inline-flex items-center ${
+                        col.align === "center" ? "justify-center" : ""
+                      } w-full font-semibold text-gray-800 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded`}
+                    >
+                      {col.label}
+                      <SortArrow active={isActive} dir={sortDir} />
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} className="border border-gray-300 px-3 py-4 text-center text-gray-500">
+                <td
+                  colSpan={SORT_COLUMNS.length}
+                  className="border border-gray-300 px-3 py-4 text-center text-gray-500"
+                >
                   Loading…
                 </td>
               </tr>
             ) : isError ? (
               <tr>
-                <td colSpan={8} className="border border-gray-300 px-3 py-4 text-center text-red-600">
+                <td
+                  colSpan={SORT_COLUMNS.length}
+                  className="border border-gray-300 px-3 py-4 text-center text-red-600"
+                >
                   Could not load workers
                   {error instanceof Error ? `: ${error.message}` : ""}
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="border border-gray-300 px-3 py-4 text-center text-gray-500">
+                <td
+                  colSpan={SORT_COLUMNS.length}
+                  className="border border-gray-300 px-3 py-4 text-center text-gray-500"
+                >
                   No workers match the filters
                 </td>
               </tr>
@@ -240,7 +361,8 @@ const TeamDetails = ({
       </div>
 
       <p className="mt-3 text-xs text-gray-500">
-        Showing {filtered.length} of {data?.length ?? 0} workers.
+        Showing {filtered.length} of {data?.length ?? 0} workers. Tap any
+        column header to sort; tap again to reverse.
       </p>
     </div>
   );
