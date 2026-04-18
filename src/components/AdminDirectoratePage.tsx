@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
-import TeamDetails from "./TeamDetails";
+import TeamDetails, { type ScopeStats } from "./TeamDetails";
 import { directorates } from "../utils/report";
+import { useReportData } from "../services/report";
 
 const AdminDirectoratePage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -10,6 +11,8 @@ const AdminDirectoratePage = () => {
   const dir = directorates.find(
     (d) => d.label.toLowerCase() === decoded.toLowerCase()
   );
+
+  const { data: report } = useReportData();
 
   if (!dir) {
     return (
@@ -34,6 +37,18 @@ const AdminDirectoratePage = () => {
     );
   }
 
+  const reportedDirectorate = report?.directorates.find(
+    (d) => d.label === dir.label
+  );
+  const stats: ScopeStats | undefined = reportedDirectorate
+    ? {
+        strength: reportedDirectorate.totals.strength,
+        confirmed: reportedDirectorate.totals.confirmed,
+        present: reportedDirectorate.totals.present,
+        absent: reportedDirectorate.totals.absent,
+      }
+    : undefined;
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-6xl">
@@ -44,6 +59,7 @@ const AdminDirectoratePage = () => {
             filters: dir.rows.map((r) => r.filter),
             teams: dir.rows.map((r) => ({ label: r.label, filter: r.filter })),
           }}
+          stats={stats}
           onClose={() => navigate("/admin/summary")}
         />
       </div>

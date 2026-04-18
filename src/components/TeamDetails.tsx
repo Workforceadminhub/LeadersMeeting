@@ -4,6 +4,13 @@ import { rowMatcher, type ReportRowFilter } from "../utils/report";
 
 type TeamChoice = { label: string; filter: ReportRowFilter };
 
+export type ScopeStats = {
+  strength: number;
+  confirmed: number;
+  present: number;
+  absent: number;
+};
+
 type Scope =
   | { kind: "row"; label: string; filter: ReportRowFilter; context?: string }
   | {
@@ -89,9 +96,17 @@ const SortArrow = ({
 
 const TeamDetails = ({
   scope,
+  stats,
   onClose,
 }: {
   scope: Scope;
+  /**
+   * Aggregate numbers from the admin report (strength/present/absent/
+   * confirmed). When provided, the chip counts at the top mirror the
+   * report screen instead of recounting the raw DB rows. Falls back
+   * to local counts if omitted.
+   */
+  stats?: ScopeStats;
   onClose: () => void;
 }) => {
   const filters = scope.kind === "row" ? [scope.filter] : scope.filters;
@@ -165,6 +180,14 @@ const TeamDetails = ({
   }, [teamNarrowed, department, search, sortKey, sortDir]);
 
   const counts = useMemo(() => {
+    if (stats) {
+      return {
+        total: stats.strength,
+        present: stats.present,
+        absent: stats.absent,
+        confirmed: stats.confirmed,
+      };
+    }
     if (!data) return { total: 0, present: 0, absent: 0, confirmed: 0 };
     let present = 0;
     let confirmed = 0;
@@ -178,7 +201,7 @@ const TeamDetails = ({
       absent: data.length - present,
       confirmed,
     };
-  }, [data]);
+  }, [data, stats]);
 
   const formatTime = (iso: string | null) => {
     if (!iso) return "—";
