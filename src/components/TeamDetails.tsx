@@ -6,15 +6,6 @@ type Scope =
   | { kind: "row"; label: string; filter: ReportRowFilter; context?: string }
   | { kind: "directorate"; label: string; filters: ReportRowFilter[] };
 
-type StatusFilter = "all" | "present" | "absent" | "confirmed";
-
-const STATUS_LABEL: Record<StatusFilter, string> = {
-  all: "All",
-  present: "Present",
-  absent: "Absent",
-  confirmed: "Confirmed",
-};
-
 type SortKey =
   | "name"
   | "phone"
@@ -100,7 +91,6 @@ const TeamDetails = ({
   const { data, isLoading, isError, error } = useLeaderDetails(filters);
 
   const [department, setDepartment] = useState<string>("");
-  const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -126,10 +116,9 @@ const TeamDetails = ({
   const filtered = useMemo(() => {
     if (!data) return [] as LeaderDetail[];
     const rows = data.filter((r) => {
+      // Only show workers who are marked present.
+      if (r.ispresent !== true) return false;
       if (department && r.department !== department) return false;
-      if (status === "present" && r.ispresent !== true) return false;
-      if (status === "absent" && r.ispresent === true) return false;
-      if (status === "confirmed" && r.isconfirmed !== true) return false;
       if (search) {
         const needle = search.toLowerCase();
         const hay = `${r.firstname || ""} ${r.lastname || ""} ${r.phonenumber || ""}`.toLowerCase();
@@ -143,7 +132,7 @@ const TeamDetails = ({
         compare(getSortValue(a, sortKey), getSortValue(b, sortKey)) *
         dirMultiplier
     );
-  }, [data, department, status, search, sortKey, sortDir]);
+  }, [data, department, search, sortKey, sortDir]);
 
   const counts = useMemo(() => {
     if (!data) return { total: 0, present: 0, absent: 0, confirmed: 0 };
@@ -209,7 +198,7 @@ const TeamDetails = ({
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-3 mb-4">
+      <div className="grid md:grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-xs text-gray-600 mb-1">Department</label>
           <select
@@ -221,21 +210,6 @@ const TeamDetails = ({
             {departmentOptions.map((d) => (
               <option key={d} value={d}>
                 {d}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs text-gray-600 mb-1">Status</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:outline-none"
-          >
-            {(Object.keys(STATUS_LABEL) as StatusFilter[]).map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABEL[s]}
               </option>
             ))}
           </select>
@@ -361,8 +335,11 @@ const TeamDetails = ({
       </div>
 
       <p className="mt-3 text-xs text-gray-500">
-        Showing {filtered.length} of {data?.length ?? 0} workers. Tap any
-        column header to sort; tap again to reverse.
+        Showing {filtered.length} present workers
+        {data && data.length > filtered.length
+          ? ` (${data.length - counts.present + (counts.present - filtered.length)} hidden by filters, ${counts.absent} absent not shown)`
+          : ""}
+        . Tap any column header to sort; tap again to reverse.
       </p>
     </div>
   );
