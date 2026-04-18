@@ -11,10 +11,7 @@ export const workerrolesoptions: SelectOption[] = [
   { label: "Assistant HOD", value: "Assistant HOD" },
   { label: "Zonal Leader", value: "Zonal Leader" },
   { label: "HOD", value: "HOD" },
-  {
-    label: "Sub team Head (heads more 2 or more departments)",
-    value: "Sub team Head (heads more 2 or more departments)",
-  },
+  { label: "Sub team Head", value: "Sub team Head" },
   { label: "Community Leader", value: "Community Leader" },
   { label: "District Pastor", value: "District Pastor" },
   { label: "Pastoral Leader", value: "Pastoral Leader" },
