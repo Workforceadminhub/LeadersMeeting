@@ -2,6 +2,7 @@ export type LeaderAggRow = {
   team: string | null;
   department: string | null;
   ispresent: boolean | null;
+  isconfirmed: boolean | null;
 };
 
 export type ReportRow = {
@@ -138,32 +139,25 @@ export const directorates: Directorate[] = [
   },
 ];
 
+export type ReportRowTotals = {
+  strength: number;
+  confirmed: number;
+  present: number;
+  absent: number;
+  percentPresent: number;
+  percentConfirmedPresent: number;
+};
+
 export type DirectorateReport = {
   label: string;
   colorClass: string;
-  rows: Array<{
-    label: string;
-    strength: number;
-    present: number;
-    absent: number;
-    percentPresent: number;
-  }>;
-  totals: {
-    strength: number;
-    present: number;
-    absent: number;
-    percentPresent: number;
-  };
+  rows: Array<ReportRowTotals & { label: string }>;
+  totals: ReportRowTotals;
 };
 
 export type ReportData = {
   directorates: DirectorateReport[];
-  totals: {
-    strength: number;
-    present: number;
-    absent: number;
-    percentPresent: number;
-  };
+  totals: ReportRowTotals;
 };
 
 export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
@@ -171,27 +165,54 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
     const rows = dir.rows.map((row) => {
       const matching = leaders.filter(row.match);
       const present = matching.filter((l) => l.ispresent === true).length;
+      const confirmed = matching.filter((l) => l.isconfirmed === true).length;
+      const confirmedAndPresent = matching.filter(
+        (l) => l.isconfirmed === true && l.ispresent === true
+      ).length;
       const strength =
         typeof row.strength === "number" ? row.strength : matching.length;
       const absent = Math.max(strength - present, 0);
       const percentPresent = strength ? (present / strength) * 100 : 0;
+      const percentConfirmedPresent = confirmed
+        ? (confirmedAndPresent / confirmed) * 100
+        : 0;
       return {
         label: row.label,
         strength,
+        confirmed,
         present,
         absent,
         percentPresent,
+        percentConfirmedPresent,
       };
     });
+
     const strength = rows.reduce((s, r) => s + r.strength, 0);
+    const confirmed = rows.reduce((s, r) => s + r.confirmed, 0);
     const present = rows.reduce((s, r) => s + r.present, 0);
-    const absent = strength - present;
+    const absent = Math.max(strength - present, 0);
     const percentPresent = strength ? (present / strength) * 100 : 0;
+    // Re-compute confirmed-present across the directorate's source
+    // rows so the % is weighted correctly instead of averaged.
+    const confirmedAndPresent = dir.rows
+      .flatMap((row) => leaders.filter(row.match))
+      .filter((l) => l.isconfirmed === true && l.ispresent === true).length;
+    const percentConfirmedPresent = confirmed
+      ? (confirmedAndPresent / confirmed) * 100
+      : 0;
+
     return {
       label: dir.label,
       colorClass: dir.colorClass,
       rows,
-      totals: { strength, present, absent, percentPresent },
+      totals: {
+        strength,
+        confirmed,
+        present,
+        absent,
+        percentPresent,
+        percentConfirmedPresent,
+      },
     };
   });
 
@@ -199,15 +220,32 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
     (s, d) => s + d.totals.strength,
     0
   );
+  const confirmed = directorateReports.reduce(
+    (s, d) => s + d.totals.confirmed,
+    0
+  );
   const present = directorateReports.reduce(
     (s, d) => s + d.totals.present,
     0
   );
-  const absent = strength - present;
+  const absent = Math.max(strength - present, 0);
   const percentPresent = strength ? (present / strength) * 100 : 0;
+  const confirmedAndPresent = leaders.filter(
+    (l) => l.isconfirmed === true && l.ispresent === true
+  ).length;
+  const percentConfirmedPresent = confirmed
+    ? (confirmedAndPresent / confirmed) * 100
+    : 0;
 
   return {
     directorates: directorateReports,
-    totals: { strength, present, absent, percentPresent },
+    totals: {
+      strength,
+      confirmed,
+      present,
+      absent,
+      percentPresent,
+      percentConfirmedPresent,
+    },
   };
 };

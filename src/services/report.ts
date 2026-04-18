@@ -11,7 +11,7 @@ const fetchAllLeaderAggRows = async (): Promise<LeaderAggRow[]> => {
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from("leader")
-      .select("team, department, ispresent")
+      .select("team, department, ispresent, isconfirmed")
       .range(from, to);
     if (error) throw new Error(error.message);
     if (!data || data.length === 0) break;

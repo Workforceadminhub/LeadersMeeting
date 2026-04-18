@@ -58,8 +58,12 @@ const DirectorateRows = ({ directorate }: { directorate: DirectorateReport }) =>
           <Cell className="bg-amber-50 text-center font-semibold">
             {row.strength}
           </Cell>
-          <Cell className="text-center text-gray-400">—</Cell>
-          <Cell className="text-center text-gray-400">—</Cell>
+          <Cell className="bg-blue-50 text-center font-semibold">
+            {row.confirmed}
+          </Cell>
+          <Cell className="bg-blue-50 text-center">
+            {row.confirmed ? formatPercent(row.percentConfirmedPresent) : "—"}
+          </Cell>
           <Cell className="bg-green-100 text-center font-semibold">
             {row.present}
           </Cell>
@@ -152,8 +156,14 @@ const AdminReport = () => {
                     Total
                   </td>
                   <Cell className="text-center">{data.totals.strength}</Cell>
-                  <Cell className="text-center text-gray-400">—</Cell>
-                  <Cell className="text-center text-gray-400">—</Cell>
+                  <Cell className="bg-blue-100 text-center">
+                    {data.totals.confirmed}
+                  </Cell>
+                  <Cell className="bg-blue-100 text-center">
+                    {data.totals.confirmed
+                      ? formatPercent(data.totals.percentConfirmedPresent)
+                      : "—"}
+                  </Cell>
                   <Cell className="bg-green-200 text-center">
                     {data.totals.present}
                   </Cell>
@@ -171,8 +181,9 @@ const AdminReport = () => {
 
         <p className="mt-3 text-xs text-gray-500">
           Numbers update when the page loads and when you tap Refresh.
-          “Confirmed” and the first “% of Present” column are placeholders
-          until confirmation data is captured.
+          “Confirmed” counts rows where <code>isconfirmed = true</code>; the
+          next column shows what percentage of those confirmed leaders are
+          actually present.
         </p>
       </div>
     </div>
