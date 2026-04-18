@@ -33,7 +33,11 @@ const markPresent = async (person: Worker): Promise<Worker | null> => {
 const manualAttendance = async (person: Worker): Promise<Worker[] | null> => {
   const { data, error } = await supabase
     .from(table)
-    .insert({ ...person, validate: true })
+    .insert({
+      ...person,
+      validate: true,
+      updatedat: new Date().toISOString(),
+    })
     .select("*");
 
   if (error) {
@@ -47,7 +51,11 @@ const updateWorker = async (person: Worker): Promise<Worker[] | null> => {
   const { id, ...rest } = person;
   const { data, error } = await supabase
     .from(table)
-    .update({ ...rest, ispresent: true })
+    .update({
+      ...rest,
+      ispresent: true,
+      updatedat: new Date().toISOString(),
+    })
     .eq("id", id as number | string)
     .select("*");
 
