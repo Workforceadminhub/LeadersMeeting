@@ -86,7 +86,7 @@ const DirectorateRows = ({
             {row.confirmed}
           </Cell>
           <Cell className="bg-blue-50 text-center">
-            {row.confirmed ? formatPercent(row.percentConfirmedPresent) : "—"}
+            {row.strength ? formatPercent(row.percentConfirmed) : "—"}
           </Cell>
           <Cell className="bg-green-100 text-center font-semibold">
             {row.present}
@@ -147,7 +147,7 @@ const AdminReport = () => {
                 <HeadCell>Teams</HeadCell>
                 <HeadCell>Team Strength</HeadCell>
                 <HeadCell>Confirmed</HeadCell>
-                <HeadCell>% of Present</HeadCell>
+                <HeadCell>% Confirmed</HeadCell>
                 <HeadCell>Present</HeadCell>
                 <HeadCell>% of Present</HeadCell>
                 <HeadCell>Absent</HeadCell>
@@ -191,8 +191,8 @@ const AdminReport = () => {
                     {data.totals.confirmed}
                   </Cell>
                   <Cell className="bg-blue-100 text-center">
-                    {data.totals.confirmed
-                      ? formatPercent(data.totals.percentConfirmedPresent)
+                    {data.totals.strength
+                      ? formatPercent(data.totals.percentConfirmed)
                       : "—"}
                   </Cell>
                   <Cell className="bg-green-200 text-center">
