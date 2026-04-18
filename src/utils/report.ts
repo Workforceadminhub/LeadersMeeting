@@ -7,6 +7,12 @@ export type LeaderAggRow = {
 export type ReportRow = {
   label: string;
   match: (leader: LeaderAggRow) => boolean;
+  /**
+   * Optional manual override for team strength. When set, the report
+   * uses this value as the denominator instead of counting rows in
+   * the `leader` table. Present/absent stay DB-driven.
+   */
+  strength?: number;
 };
 
 export type Directorate = {
@@ -35,8 +41,8 @@ export const directorates: Directorate[] = [
     label: "ATTRACTION",
     colorClass: "bg-cyan-300",
     rows: [
-      { label: "Mission", match: matchTeam("Mission") },
-      { label: "Programs", match: matchTeam("Programs") },
+      { label: "Mission", match: matchTeam("Mission"), strength: 29 },
+      { label: "Programs", match: matchTeam("Programs"), strength: 189 },
     ],
   },
   {
@@ -48,9 +54,9 @@ export const directorates: Directorate[] = [
     label: "SPD",
     colorClass: "bg-yellow-300",
     rows: [
-      { label: "Maturity", match: matchTeam("Maturity") },
-      { label: "Ministry", match: matchTeam("Ministry") },
-      { label: "Membership", match: matchTeam("Membership") },
+      { label: "Maturity", match: matchTeam("Maturity"), strength: 29 },
+      { label: "Ministry", match: matchTeam("Ministry"), strength: 58 },
+      { label: "Membership", match: matchTeam("Membership"), strength: 106 },
     ],
   },
   {
@@ -60,10 +66,12 @@ export const directorates: Directorate[] = [
       {
         label: "Kidzone",
         match: matchTeamDepartmentSuffix("Next Gen", "Kidszone"),
+        strength: 35,
       },
       {
         label: "Stir House",
         match: matchTeamDepartmentSuffix("Next Gen", "Stirhouse"),
+        strength: 20,
       },
     ],
   },
@@ -74,6 +82,7 @@ export const directorates: Directorate[] = [
       {
         label: "Admin & Facility",
         match: matchTeamDepartment("General Service", "Admin and Facility"),
+        strength: 2,
       },
       {
         label: "Communication (DMU)",
@@ -81,10 +90,12 @@ export const directorates: Directorate[] = [
           "General Service",
           "Communications (DMU)"
         ),
+        strength: 6,
       },
       {
         label: "Finance",
         match: matchTeamDepartment("General Service", "Finance"),
+        strength: 6,
       },
     ],
   },
@@ -159,9 +170,10 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
   const directorateReports: DirectorateReport[] = directorates.map((dir) => {
     const rows = dir.rows.map((row) => {
       const matching = leaders.filter(row.match);
-      const strength = matching.length;
       const present = matching.filter((l) => l.ispresent === true).length;
-      const absent = strength - present;
+      const strength =
+        typeof row.strength === "number" ? row.strength : matching.length;
+      const absent = Math.max(strength - present, 0);
       const percentPresent = strength ? (present / strength) * 100 : 0;
       return {
         label: row.label,
