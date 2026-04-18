@@ -5,9 +5,14 @@ export type LeaderAggRow = {
   isconfirmed: boolean | null;
 };
 
+export type ReportRowFilter =
+  | { kind: "team"; team: string }
+  | { kind: "team-department"; team: string; department: string }
+  | { kind: "team-department-suffix"; team: string; suffix: string };
+
 export type ReportRow = {
   label: string;
-  match: (leader: LeaderAggRow) => boolean;
+  filter: ReportRowFilter;
   /**
    * Optional manual override for team strength. When set, the report
    * uses this value as the denominator instead of counting rows in
@@ -23,41 +28,68 @@ export type Directorate = {
   rows: ReportRow[];
 };
 
-const matchTeam = (team: string) => (l: LeaderAggRow) =>
-  (l.team || "").toLowerCase() === team.toLowerCase();
-
-const matchTeamDepartment = (team: string, department: string) =>
-  (l: LeaderAggRow) =>
-    (l.team || "").toLowerCase() === team.toLowerCase() &&
-    (l.department || "").toLowerCase() === department.toLowerCase();
-
-const matchTeamDepartmentSuffix =
-  (team: string, suffix: string) => (l: LeaderAggRow) => {
-    if ((l.team || "").toLowerCase() !== team.toLowerCase()) return false;
-    return (l.department || "").toLowerCase().endsWith(suffix.toLowerCase());
-  };
+export const rowMatcher = (filter: ReportRowFilter) => {
+  switch (filter.kind) {
+    case "team":
+      return (l: LeaderAggRow) =>
+        (l.team || "").toLowerCase() === filter.team.toLowerCase();
+    case "team-department":
+      return (l: LeaderAggRow) =>
+        (l.team || "").toLowerCase() === filter.team.toLowerCase() &&
+        (l.department || "").toLowerCase() ===
+          filter.department.toLowerCase();
+    case "team-department-suffix":
+      return (l: LeaderAggRow) => {
+        if ((l.team || "").toLowerCase() !== filter.team.toLowerCase())
+          return false;
+        return (l.department || "")
+          .toLowerCase()
+          .endsWith(filter.suffix.toLowerCase());
+      };
+  }
+};
 
 export const directorates: Directorate[] = [
   {
     label: "ATTRACTION",
     colorClass: "bg-cyan-300",
     rows: [
-      { label: "Mission", match: matchTeam("Mission"), strength: 29 },
-      { label: "Programs", match: matchTeam("Programs"), strength: 189 },
+      {
+        label: "Mission",
+        filter: { kind: "team", team: "Mission" },
+        strength: 29,
+      },
+      {
+        label: "Programs",
+        filter: { kind: "team", team: "Programs" },
+        strength: 189,
+      },
     ],
   },
   {
     label: "NLP",
     colorClass: "bg-purple-300",
-    rows: [{ label: "NLP", match: matchTeam("NLP") }],
+    rows: [{ label: "NLP", filter: { kind: "team", team: "NLP" } }],
   },
   {
     label: "SPD",
     colorClass: "bg-yellow-300",
     rows: [
-      { label: "Maturity", match: matchTeam("Maturity"), strength: 29 },
-      { label: "Ministry", match: matchTeam("Ministry"), strength: 58 },
-      { label: "Membership", match: matchTeam("Membership"), strength: 106 },
+      {
+        label: "Maturity",
+        filter: { kind: "team", team: "Maturity" },
+        strength: 29,
+      },
+      {
+        label: "Ministry",
+        filter: { kind: "team", team: "Ministry" },
+        strength: 58,
+      },
+      {
+        label: "Membership",
+        filter: { kind: "team", team: "Membership" },
+        strength: 106,
+      },
     ],
   },
   {
@@ -66,12 +98,20 @@ export const directorates: Directorate[] = [
     rows: [
       {
         label: "Kidzone",
-        match: matchTeamDepartmentSuffix("Next Gen", "Kidszone"),
+        filter: {
+          kind: "team-department-suffix",
+          team: "Next Gen",
+          suffix: "Kidszone",
+        },
         strength: 35,
       },
       {
         label: "Stir House",
-        match: matchTeamDepartmentSuffix("Next Gen", "Stirhouse"),
+        filter: {
+          kind: "team-department-suffix",
+          team: "Next Gen",
+          suffix: "Stirhouse",
+        },
         strength: 20,
       },
     ],
@@ -82,20 +122,29 @@ export const directorates: Directorate[] = [
     rows: [
       {
         label: "Admin & Facility",
-        match: matchTeamDepartment("General Service", "Admin and Facility"),
+        filter: {
+          kind: "team-department",
+          team: "General Service",
+          department: "Admin and Facility",
+        },
         strength: 2,
       },
       {
         label: "Communication (DMU)",
-        match: matchTeamDepartment(
-          "General Service",
-          "Communications (DMU)"
-        ),
+        filter: {
+          kind: "team-department",
+          team: "General Service",
+          department: "Communications (DMU)",
+        },
         strength: 6,
       },
       {
         label: "Finance",
-        match: matchTeamDepartment("General Service", "Finance"),
+        filter: {
+          kind: "team-department",
+          team: "General Service",
+          department: "Finance",
+        },
         strength: 6,
       },
     ],
@@ -103,7 +152,7 @@ export const directorates: Directorate[] = [
   {
     label: "COMMUNITIES",
     colorClass: "bg-red-300",
-    rows: [{ label: "Districts", match: matchTeam("Districts") }],
+    rows: [{ label: "Districts", filter: { kind: "team", team: "Districts" } }],
   },
   {
     label: "INTERACTIVE GROUPS",
@@ -111,15 +160,27 @@ export const directorates: Directorate[] = [
     rows: [
       {
         label: "Men of Harvest",
-        match: matchTeamDepartment("Interactive Groups", "Men of Harvest"),
+        filter: {
+          kind: "team-department",
+          team: "Interactive Groups",
+          department: "Men of Harvest",
+        },
       },
       {
         label: "Singles Ministry",
-        match: matchTeamDepartment("Interactive Groups", "Singles Ministry"),
+        filter: {
+          kind: "team-department",
+          team: "Interactive Groups",
+          department: "Singles Ministry",
+        },
       },
       {
         label: "Women of Wisdom",
-        match: matchTeamDepartment("Interactive Groups", "Women of Wisdom"),
+        filter: {
+          kind: "team-department",
+          team: "Interactive Groups",
+          department: "Women of Wisdom",
+        },
       },
     ],
   },
@@ -129,11 +190,19 @@ export const directorates: Directorate[] = [
     rows: [
       {
         label: "Directional leaders",
-        match: matchTeamDepartment("Senior Leadership", "Directional leader"),
+        filter: {
+          kind: "team-department",
+          team: "Senior Leadership",
+          department: "Directional leader",
+        },
       },
       {
         label: "Pastoral leaders",
-        match: matchTeamDepartment("Senior Leadership", "Pastoral Leaders"),
+        filter: {
+          kind: "team-department",
+          team: "Senior Leadership",
+          department: "Pastoral Leaders",
+        },
       },
     ],
   },
@@ -145,13 +214,14 @@ export type ReportRowTotals = {
   present: number;
   absent: number;
   percentPresent: number;
+  /** Percentage of confirmed leaders who are also marked present. */
   percentConfirmedPresent: number;
 };
 
 export type DirectorateReport = {
   label: string;
   colorClass: string;
-  rows: Array<ReportRowTotals & { label: string }>;
+  rows: Array<ReportRowTotals & { label: string; row: ReportRow }>;
   totals: ReportRowTotals;
 };
 
@@ -163,7 +233,7 @@ export type ReportData = {
 export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
   const directorateReports: DirectorateReport[] = directorates.map((dir) => {
     const rows = dir.rows.map((row) => {
-      const matching = leaders.filter(row.match);
+      const matching = leaders.filter(rowMatcher(row.filter));
       const present = matching.filter((l) => l.ispresent === true).length;
       const confirmed = matching.filter((l) => l.isconfirmed === true).length;
       const confirmedAndPresent = matching.filter(
@@ -178,6 +248,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
         : 0;
       return {
         label: row.label,
+        row,
         strength,
         confirmed,
         present,
@@ -192,10 +263,8 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
     const present = rows.reduce((s, r) => s + r.present, 0);
     const absent = Math.max(strength - present, 0);
     const percentPresent = strength ? (present / strength) * 100 : 0;
-    // Re-compute confirmed-present across the directorate's source
-    // rows so the % is weighted correctly instead of averaged.
     const confirmedAndPresent = dir.rows
-      .flatMap((row) => leaders.filter(row.match))
+      .flatMap((row) => leaders.filter(rowMatcher(row.filter)))
       .filter((l) => l.isconfirmed === true && l.ispresent === true).length;
     const percentConfirmedPresent = confirmed
       ? (confirmedAndPresent / confirmed) * 100
