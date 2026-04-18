@@ -214,8 +214,8 @@ export type ReportRowTotals = {
   present: number;
   absent: number;
   percentPresent: number;
-  /** Percentage of confirmed leaders who are also marked present. */
-  percentConfirmedPresent: number;
+  /** Percentage of total team strength that has been confirmed. */
+  percentConfirmed: number;
 };
 
 export type DirectorateReport = {
@@ -236,16 +236,11 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
       const matching = leaders.filter(rowMatcher(row.filter));
       const present = matching.filter((l) => l.ispresent === true).length;
       const confirmed = matching.filter((l) => l.isconfirmed === true).length;
-      const confirmedAndPresent = matching.filter(
-        (l) => l.isconfirmed === true && l.ispresent === true
-      ).length;
       const strength =
         typeof row.strength === "number" ? row.strength : matching.length;
       const absent = Math.max(strength - present, 0);
       const percentPresent = strength ? (present / strength) * 100 : 0;
-      const percentConfirmedPresent = confirmed
-        ? (confirmedAndPresent / confirmed) * 100
-        : 0;
+      const percentConfirmed = strength ? (confirmed / strength) * 100 : 0;
       return {
         label: row.label,
         row,
@@ -254,7 +249,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
         present,
         absent,
         percentPresent,
-        percentConfirmedPresent,
+        percentConfirmed,
       };
     });
 
@@ -263,12 +258,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
     const present = rows.reduce((s, r) => s + r.present, 0);
     const absent = Math.max(strength - present, 0);
     const percentPresent = strength ? (present / strength) * 100 : 0;
-    const confirmedAndPresent = dir.rows
-      .flatMap((row) => leaders.filter(rowMatcher(row.filter)))
-      .filter((l) => l.isconfirmed === true && l.ispresent === true).length;
-    const percentConfirmedPresent = confirmed
-      ? (confirmedAndPresent / confirmed) * 100
-      : 0;
+    const percentConfirmed = strength ? (confirmed / strength) * 100 : 0;
 
     return {
       label: dir.label,
@@ -280,7 +270,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
         present,
         absent,
         percentPresent,
-        percentConfirmedPresent,
+        percentConfirmed,
       },
     };
   });
@@ -299,12 +289,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
   );
   const absent = Math.max(strength - present, 0);
   const percentPresent = strength ? (present / strength) * 100 : 0;
-  const confirmedAndPresent = leaders.filter(
-    (l) => l.isconfirmed === true && l.ispresent === true
-  ).length;
-  const percentConfirmedPresent = confirmed
-    ? (confirmedAndPresent / confirmed) * 100
-    : 0;
+  const percentConfirmed = strength ? (confirmed / strength) * 100 : 0;
 
   return {
     directorates: directorateReports,
@@ -314,7 +299,7 @@ export const buildReport = (leaders: LeaderAggRow[]): ReportData => {
       present,
       absent,
       percentPresent,
-      percentConfirmedPresent,
+      percentConfirmed,
     },
   };
 };
